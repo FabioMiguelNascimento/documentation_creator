@@ -12,9 +12,16 @@
 
 .dragHandle {
   cursor: grab;
-  opacity: 0.3;
+  opacity: 0;
   padding: calc(var(--spacing-unit) * 0.5);
-  &:hover { opacity: 1; }
+  transition: var(--hover-transition);
+
+  .codeBlock:hover & {
+    opacity: 0.3;
+    &:hover { 
+      opacity: 1; 
+    }
+  }
 }
 
 .codeWrapper {
