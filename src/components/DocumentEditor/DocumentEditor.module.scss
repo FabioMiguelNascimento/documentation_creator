@@ -1,0 +1,31 @@
+.editor {
+  width: 100%;
+  min-height: 200px;
+  padding: var(--spacing-unit);
+  background: var(--primary-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-sm);
+
+  &:hover {
+    border-color: var(--text-color);
+  }
+}
+
+.placeholder {
+  color: var(--text-placeholder);
+  padding: var(--spacing-unit);
+  text-align: center;
+  border: 2px dashed var(--border-color);
+  border-radius: var(--border-radius);
+  margin: var(--spacing-unit) 0;
+}
+
+.blockWrapper {
+  position: relative;
+
+  &:hover {
+    background: var(--secondary-bg);
+    border-radius: var(--border-radius);
+  }
+}

@@ -1,0 +1,42 @@
+.sidebar {
+  width: var(--sidebar-width);
+  background-color: var(--secondary-bg);
+  border-left: 1px solid var(--border-color);
+  padding: var(--spacing-unit);
+  height: 100vh;
+  position: sticky;
+  top: 0;
+  right: 0;
+}
+
+.section {
+  margin-bottom: calc(var(--spacing-unit) * 2);
+
+  h3 {
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-unit);
+  }
+}
+
+.blockButtons, .exportButtons {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--spacing-unit) * 0.5);
+
+  button {
+    width: 100%;
+    padding: calc(var(--spacing-unit) * 0.75);
+    background: var(--primary-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: var(--hover-transition);
+
+    &:hover {
+      border-color: var(--text-color);
+      background: var(--secondary-bg);
+    }
+  }
+}

@@ -1,0 +1,45 @@
+.container {
+  padding: calc(var(--spacing-unit) * 2);
+}
+
+.docsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: calc(var(--spacing-unit) * 1.5);
+  margin-top: calc(var(--spacing-unit) * 2);
+}
+
+.docCard {
+  padding: calc(var(--spacing-unit) * 1.5);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  transition: var(--hover-transition);
+
+  &:hover {
+    border-color: var(--text-color);
+    transform: translateY(-2px);
+  }
+
+  h2 {
+    margin: 0 0 calc(var(--spacing-unit) * 0.5);
+    font-size: 1.25rem;
+  }
+
+  p {
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-unit);
+  }
+}
+
+.tags {
+  display: flex;
+  gap: calc(var(--spacing-unit) * 0.5);
+  flex-wrap: wrap;
+}
+
+.tag {
+  font-size: 0.75rem;
+  padding: calc(var(--spacing-unit) * 0.25) calc(var(--spacing-unit) * 0.5);
+  background: var(--secondary-bg);
+  border-radius: var(--border-radius);
+}

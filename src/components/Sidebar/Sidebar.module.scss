@@ -1,0 +1,45 @@
+.sidebar {
+  width: var(--sidebar-width);
+  background-color: var(--secondary-bg);
+  border-right: 1px solid var(--border-color);
+  padding: var(--spacing-unit);
+  height: 100vh;
+  position: sticky;
+  top: 0;
+}
+
+.logo {
+  padding: var(--spacing-unit) 0;
+  border-bottom: 1px solid var(--border-color);
+  
+  h1 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-color);
+  }
+}
+
+.newDocButton {
+  width: 100%;
+  padding: calc(var(--spacing-unit) * 0.75);
+  margin: var(--spacing-unit) 0;
+  background-color: var(--text-color);
+  color: var(--primary-bg);
+  border: none;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  transition: var(--hover-transition);
+  
+  &:hover {
+    opacity: 0.8;
+  }
+}
+
+.nav {
+  h2 {
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    margin: var(--spacing-unit) 0;
+  }
+}

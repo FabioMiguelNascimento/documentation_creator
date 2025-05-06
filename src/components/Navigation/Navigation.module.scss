@@ -1,0 +1,82 @@
+.navigation {
+  width: var(--sidebar-width);
+  height: 100vh;
+  background: var(--secondary-bg);
+  border-right: 1px solid var(--border-color);
+  padding: var(--spacing-unit);
+  position: sticky;
+  top: 0;
+  left: 0;
+}
+
+.header {
+  padding: var(--spacing-unit) 0;
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: var(--spacing-unit);
+
+  h1 {
+    font-size: 1.5rem;
+    font-weight: 600;
+  }
+}
+
+.newButton {
+  width: 100%;
+  padding: calc(var(--spacing-unit) * 0.75);
+  background: var(--text-color);
+  color: var(--primary-bg);
+  border: none;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  margin-bottom: var(--spacing-unit);
+  transition: var(--hover-transition);
+
+  &:hover {
+    opacity: 0.9;
+  }
+}
+
+.docsList {
+  h2 {
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    margin-bottom: calc(var(--spacing-unit) * 0.5);
+  }
+}
+
+.docLink {
+  flex: 1;
+  color: var(--text-color);
+  text-decoration: none;
+  margin-right: calc(var(--spacing-unit) * 0.5);
+  
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.docItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: calc(var(--spacing-unit) * 0.5);
+  border-radius: var(--border-radius);
+
+  &:hover {
+    background: var(--primary-bg);
+
+    .options {
+      opacity: 1;
+    }
+  }
+}
+
+.options {
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.deleteItem {
+  color: #ff4444;
+}

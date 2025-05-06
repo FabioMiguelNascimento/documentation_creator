@@ -1,0 +1,78 @@
+.listBlock {
+  position: relative;
+  display: flex;
+  gap: calc(var(--spacing-unit) * 0.5);
+  padding: calc(var(--spacing-unit) * 0.5);
+
+  &:hover {
+    background-color: var(--secondary-bg);
+    border-radius: var(--border-radius);
+  }
+}
+
+.dragHandle {
+  cursor: grab;
+  opacity: 0.3;
+  padding: calc(var(--spacing-unit) * 0.5);
+  &:hover { opacity: 1; }
+}
+
+.bullet, .numbered {
+  flex: 1;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+
+  li {
+    display: flex;
+    align-items: flex-start;
+    margin: calc(var(--spacing-unit) * 0.25) 0;
+    position: relative;
+    padding-left: calc(var(--spacing-unit) * 1.5);
+
+    &::before {
+      position: absolute;
+      left: 0;
+      top: calc(var(--spacing-unit) * 0.25);
+      content: "•";
+      display: inline-block;
+      width: calc(var(--spacing-unit) * 1.5);
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    .editableContent {
+      flex: 1;
+      min-height: 24px;
+      outline: none;
+      padding: calc(var(--spacing-unit) * 0.25) 0;
+      margin-left: 0;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-break: break-word;
+      cursor: text;
+
+      &:focus {
+        background-color: var(--primary-bg);
+        border-radius: var(--border-radius);
+      }
+
+      &:empty::before {
+        content: 'Digite um item...';
+        color: var(--text-placeholder);
+      }
+    }
+  }
+}
+
+.numbered {
+  counter-reset: item;
+
+  li {
+    counter-increment: item;
+
+    &::before {
+      content: counter(item) ".";
+    }
+  }
+}
