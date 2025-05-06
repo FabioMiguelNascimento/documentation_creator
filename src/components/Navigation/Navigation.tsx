@@ -70,11 +70,11 @@ export default function Navigation() {
       </div>
 
       <button onClick={handleNewDoc} className={styles.newButton}>
-        + Nova Documentação
+        + New doc
       </button>
 
       <div className={styles.docsList}>
-        <h2>Documentações</h2>
+        <h2>Current Docs</h2>
         {docs.map((doc) => (
           <div key={doc.id} className={styles.docItem}>
             <Link href={`/docs/${doc.slug}`} className={styles.docLink}>
@@ -82,20 +82,20 @@ export default function Navigation() {
             </Link>
             <div className={styles.options}>
               <Dropdown trigger={<HiDotsVertical />} align="right">
-                <DropdownItem icon={<HiPencil />}>Renomear</DropdownItem>
+                <DropdownItem icon={<HiPencil />}>Rename</DropdownItem>
                 <DropdownItem
                   icon={<HiDuplicate />}
                   onClick={() => handleDuplicate(doc)}
                 >
-                  Duplicar
+                  Clone
                 </DropdownItem>
-                <DropdownItem icon={<HiDownload />}>Exportar</DropdownItem>
+                <DropdownItem icon={<HiDownload />}>Export</DropdownItem>
                 <DropdownItem
                   icon={<HiTrash />}
                   onClick={() => handleDelete(doc.id)}
                   className={styles.deleteItem}
                 >
-                  Excluir
+                  Delete
                 </DropdownItem>
               </Dropdown>
             </div>

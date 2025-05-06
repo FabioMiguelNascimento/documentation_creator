@@ -9,6 +9,14 @@
   border-radius: var(--border-radius);
   box-shadow: var(--shadow-sm);
   animation: fadeIn 0.2s ease;
+  transform-origin: center bottom;
+  will-change: transform;
+  transition: all 0.2s ease, opacity 0.2s ease;
+
+  &.outOfBounds {
+    scale: .8;
+    opacity: 0.5;
+  }
 
   button {
     display: flex;

@@ -16,6 +16,7 @@ interface SelectProps {
   placeholder?: string;
   loading?: boolean;
   emptyMessage?: string;
+  className?: string;
 }
 
 export default function Select({ 
@@ -35,6 +36,7 @@ export default function Select({
   const [highlightedIndex, setHighlightedIndex] = useState(0);
   const searchRef = useRef<HTMLInputElement>(null);
   const optionsRef = useRef<HTMLUListElement>(null);
+  const selectRef = useRef<HTMLDivElement>(null);
 
   const selected = options.find(option => option.value === value);
   
@@ -65,6 +67,29 @@ export default function Select({
       case 'Escape':
         setIsOpen(false);
         break;
+    }
+  };
+
+  const handleTriggerClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsOpen(!isOpen);
+  };
+
+  const handleOptionClick = (e: React.MouseEvent, value: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onChange(value);
+    setIsOpen(false);
+  };
+
+  const preventSelectionLoss = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const selection = window.getSelection();
+    if (selection?.rangeCount) {
+      const range = selection.getRangeAt(0);
+      range.setStart(range.startContainer, range.startOffset);
+      range.setEnd(range.endContainer, range.endOffset);
     }
   };
 
@@ -99,19 +124,40 @@ export default function Select({
     }
   }, [isOpen]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleClickOutside = (e: MouseEvent) => {
+      if (selectRef.current && !selectRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isOpen]);
+
   return (
     <div 
+      ref={selectRef}
       className={`${styles.select} ${className || ''}`}
       role="combobox"
       aria-expanded={isOpen}
       aria-haspopup="listbox"
       aria-controls={listboxId}
       aria-labelledby={selectId}
+      onMouseDown={(e) => {
+        preventSelectionLoss(e);
+        e.preventDefault();
+      }}
     >
       <button 
         id={selectId}
         className={`${styles.trigger} select-trigger`}
-        onClick={() => setIsOpen(!isOpen)}
+        onMouseDown={(e) => {
+          preventSelectionLoss(e);
+          handleTriggerClick(e);
+        }}
         disabled={loading}
         aria-expanded={isOpen}
         aria-controls={listboxId}
@@ -137,6 +183,10 @@ export default function Select({
           className={styles.dropdown}
           data-show={isOpen}
           role="presentation"
+          onMouseDown={(e) => {
+            preventSelectionLoss(e);
+            e.preventDefault();
+          }}
         >
           {options.length > 0 && (
             <div className={styles.search}>
@@ -188,10 +238,7 @@ export default function Select({
                   aria-selected={option.value === value}
                   data-highlighted={index === highlightedIndex}
                   tabIndex={-1}
-                  onClick={() => {
-                    onChange(option.value);
-                    setIsOpen(false);
-                  }}
+                  onMouseDown={(e) => handleOptionClick(e, option.value)}
                 >
                   {option.icon && (
                     <span className={styles.icon} aria-hidden="true">

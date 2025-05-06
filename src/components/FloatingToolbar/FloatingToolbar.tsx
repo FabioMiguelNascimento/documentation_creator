@@ -1,6 +1,8 @@
 import ColorPicker from '@/components/ColorPicker/ColorPicker';
 import Select, { SelectOption } from '@/components/Select/Select';
+import { usePositionTracking } from '@/hooks/usePositionTracking';
 import { Editor } from '@tiptap/react';
+import { useState } from 'react';
 import { HiCode, HiMinus, HiPencilAlt } from 'react-icons/hi';
 import { HiBold, HiCodeBracket } from 'react-icons/hi2';
 import { TbH1, TbH2, TbH3 } from 'react-icons/tb';
@@ -22,6 +24,13 @@ const blockOptions: SelectOption[] = [
 ];
 
 export default function FloatingToolbar({ editor, show, position, onTransformToCodeBlock }: FloatingToolbarProps) {
+  const [isOutOfBounds, setIsOutOfBounds] = useState(false);
+  const { position: positionStyle, ref: toolbarRef } = usePositionTracking({
+    show,
+    initialX: position.x,
+    onOutOfBounds: setIsOutOfBounds
+  });
+
   if (!editor || !show) return null;
 
   const getCurrentBlockValue = () => {
@@ -37,7 +46,7 @@ export default function FloatingToolbar({ editor, show, position, onTransformToC
       case 'h1':
       case 'h2':
       case 'h3':
-        editor.chain().focus().toggleHeading({ level: parseInt(value[1]) }).run();
+        editor.chain().focus().toggleHeading({ level: parseInt(value[1]) as 1 | 2 | 3 }).run();
         break;
       case 'inline-code':
         editor.chain().focus().toggleCode().run();
@@ -68,13 +77,9 @@ export default function FloatingToolbar({ editor, show, position, onTransformToC
 
   return (
     <div 
-      className={styles.toolbar}
-      style={{ 
-        left: position.x,
-        top: position.y,
-        transform: 'translate(-50%, -100%)',
-        zIndex: 100
-      }}
+      ref={toolbarRef}
+      className={`${styles.toolbar} ${isOutOfBounds ? styles.outOfBounds : ''}`}
+      style={positionStyle}
     >
       <div className={styles.group}>
         <button
