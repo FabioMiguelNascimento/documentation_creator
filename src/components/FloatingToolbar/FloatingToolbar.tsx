@@ -1,3 +1,4 @@
+import ColorPicker from '@/components/ColorPicker/ColorPicker';
 import Select, { SelectOption } from '@/components/Select/Select';
 import { Editor } from '@tiptap/react';
 import { HiCode, HiMinus, HiPencilAlt } from 'react-icons/hi';
@@ -47,6 +48,24 @@ export default function FloatingToolbar({ editor, show, position, onTransformToC
     }
   };
 
+  const handleColorChange = (color: string) => {
+    if (!editor) return;
+    
+    editor.chain().focus().setColor(color).run();
+  };
+
+  const handleBackgroundChange = (color: string) => {
+    if (!editor) return;
+    
+    if (color === 'transparent') {
+      editor.chain().focus().unsetHighlight().run();
+    } else {
+      editor.chain().focus().setHighlight({ color }).run();
+    }
+  };
+
+  const isColorActive = (color: string) => editor?.isActive('textStyle', { color });
+
   return (
     <div 
       className={styles.toolbar}
@@ -76,6 +95,10 @@ export default function FloatingToolbar({ editor, show, position, onTransformToC
         >
           <HiMinus />
         </button>
+        <ColorPicker 
+          onTextColorSelect={handleColorChange}
+          onBackgroundColorSelect={handleBackgroundChange}
+        />
       </div>
 
       <div className={styles.group}>

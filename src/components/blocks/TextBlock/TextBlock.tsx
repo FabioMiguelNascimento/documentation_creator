@@ -1,12 +1,15 @@
 import FloatingToolbar from '@/components/FloatingToolbar/FloatingToolbar';
 import { Draggable } from "@hello-pangea/dnd";
 import { Extension } from '@tiptap/core';
+import { Color } from '@tiptap/extension-color';
+import Highlight from '@tiptap/extension-highlight';
 import Link from '@tiptap/extension-link';
+import TextStyle from '@tiptap/extension-text-style';
 import { EditorContent, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { Plugin } from 'prosemirror-state';
 import { Decoration, DecorationSet } from 'prosemirror-view';
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import '../../../styles/markdown.scss';
 import styles from './TextBlock.module.scss';
 
@@ -75,6 +78,18 @@ export default function TextBlock({
   onTransform,
 }: TextBlockProps) {
   const [toolbarPosition, setToolbarPosition] = useState({ x: 0, y: 0, show: false });
+  const blockRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (!blockRef.current?.contains(event.target as Node)) {
+        setToolbarPosition(prev => ({ ...prev, show: false }));
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const editor = useEditor({
     extensions: [
@@ -88,14 +103,24 @@ export default function TextBlock({
       Link,
       CodeBlockDetector,
       Placeholder.configure({
-        placeholder: 'Start typing or insert "/" for comannds',
+        placeholder: 'Start typing or insert "/" for commands',
+      }),
+      TextStyle,
+      Color,
+      Highlight.configure({ 
+        multicolor: true,
+        HTMLAttributes: {
+          class: 'highlighted-text',
+        },
       })
     ],
     content,
     editable: true,
     immediatelyRender: false,
     editorProps: {
-
+      attributes: {
+        contenteditable: 'true',
+      },
       handleKeyDown: (view, event) => {
         if (!editor) return false;
         
@@ -157,7 +182,10 @@ export default function TextBlock({
     <Draggable draggableId={id} index={index}>
       {(provided) => (
         <div
-          ref={provided.innerRef}
+          ref={(node) => {
+            blockRef.current = node;
+            provided.innerRef(node);
+          }}
           {...provided.draggableProps}
           className={`${styles.textBlock} inlineFormatting`}
         >
