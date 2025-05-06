@@ -1,6 +1,17 @@
 .select {
   position: relative;
   width: 100%;
+  
+  select {
+    color: var(--text-color);
+    background: var(--tertiary-bg);
+    border: 1px solid var(--border-color);
+    
+    option {
+      color: var(--text-color);
+      background: var(--tertiary-bg);
+    }
+  }
 }
 
 .trigger {
@@ -8,7 +19,8 @@
   align-items: center;
   width: 100%;
   padding: calc(var(--spacing-unit) * 0.5);
-  background: var(--primary-bg);
+  background: var(--tertiary-bg);
+  color: var(--text-color);
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius);
   cursor: pointer;
@@ -65,7 +77,8 @@
   top: calc(100% + 4px);
   left: 0;
   right: 0;
-  background: var(--primary-bg);
+  background: var(--tertiary-bg);
+  color: var(--text-color);
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius);
   box-shadow: var(--shadow-sm);
@@ -139,6 +152,7 @@
     cursor: pointer;
     border-radius: calc(var(--border-radius) * 0.5);
     transition: var(--hover-transition);
+    color: var(--text-color);
 
     &:hover {
       background: var(--secondary-bg);

@@ -1,10 +1,10 @@
 import Select, { SelectOption } from '@/components/Select/Select';
+import '@/styles/prism-theme.scss';
 import { Draggable } from '@hello-pangea/dnd';
 import Prism from 'prismjs';
 import 'prismjs/components/prism-jsx';
 import 'prismjs/components/prism-tsx';
 import 'prismjs/components/prism-typescript';
-import 'prismjs/themes/prism.css';
 import { useEffect, useRef, useState } from 'react';
 import { SiCss3, SiHtml5, SiJavascript, SiReact, SiSass, SiTypescript } from 'react-icons/si';
 import styles from './CodeBlock.module.scss';
@@ -36,13 +36,11 @@ export default function CodeBlock({
   onChange,
   onDelete
 }: CodeBlockProps) {
-  const [isEditing, setIsEditing] = useState(false);
   const [code, setCode] = useState(content);
-  const editorRef = useRef<HTMLTextAreaElement>(null);
   const preRef = useRef<HTMLPreElement>(null);
 
   useEffect(() => {
-    if (!isEditing && preRef.current) {
+    if (preRef.current) {
       const highlightedCode = Prism.highlight(
         code,
         Prism.languages[language] || Prism.languages.javascript,
@@ -50,37 +48,16 @@ export default function CodeBlock({
       );
       preRef.current.innerHTML = highlightedCode;
     }
-  }, [isEditing, code, language]);
+  }, [code, language]);
 
-  const handleBlur = () => {
-    setIsEditing(false);
-    onChange(id, code, language);
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Escape') {
-      setIsEditing(false);
-      return;
-    }
-
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLPreElement>) => {
     if (e.key === 'Enter' && e.shiftKey) {
-      const target = e.currentTarget;
-      const start = target.selectionStart;
-      const end = target.selectionEnd;
-      
-      setCode(
-        code.substring(0, start) + '\n' + code.substring(end)
-      );
-      
-      setTimeout(() => {
-        target.selectionStart = target.selectionEnd = start + 1;
-      }, 0);
-      
       e.preventDefault();
+      document.execCommand('insertLineBreak');
       return;
     }
 
-    const isEmpty = !e.currentTarget.value.trim();
+    const isEmpty = !e.currentTarget.textContent?.trim();
     if ((e.key === 'Backspace' || e.key === 'Delete') && isEmpty) {
       e.preventDefault();
       onDelete(id);
@@ -88,18 +65,14 @@ export default function CodeBlock({
 
     if (e.key === 'Tab') {
       e.preventDefault();
-      const target = e.currentTarget;
-      const start = target.selectionStart;
-      const end = target.selectionEnd;
-
-      setCode(
-        code.substring(0, start) + '  ' + code.substring(end)
-      );
-
-      setTimeout(() => {
-        target.selectionStart = target.selectionEnd = start + 2;
-      }, 0);
+      document.execCommand('insertText', false, '  ');
     }
+  };
+
+  const handleInput = () => {
+    const text = preRef.current?.textContent || '';
+    setCode(text);
+    onChange(id, text, language);
   };
 
   return (
@@ -114,31 +87,24 @@ export default function CodeBlock({
             ⋮
           </div>
           <div className={styles.codeWrapper}>
-            <Select
-              value={language}
-              options={languageOptions}
-              onChange={(value) => onChange(id, code, value)}
-              placeholder="Select language"
-            />
-            {isEditing ? (
-              <textarea
-                ref={editorRef}
-                value={code}
-                onChange={(e) => setCode(e.target.value)}
-                onBlur={handleBlur}
-                onKeyDown={handleKeyDown}
-                className={styles.editor}
-                autoFocus
+            <div className={styles.selectWrapper}>
+              <Select
+                value={language}
+                onChange={(value) => onChange(id, code, value)}
+                options={languageOptions}
+                placeholder="Select language..."
               />
-            ) : (
-              <pre 
-                ref={preRef}
-                onClick={() => setIsEditing(true)}
-                className={`language-${language}`}
-              >
-                <code>{code}</code>
-              </pre>
-            )}
+            </div>
+            <pre 
+              ref={preRef}
+              contentEditable
+              onInput={handleInput}
+              onKeyDown={handleKeyDown}
+              className={`language-${language}`}
+              suppressContentEditableWarning
+            >
+              <code>{code}</code>
+            </pre>
           </div>
         </div>
       )}

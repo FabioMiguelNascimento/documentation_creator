@@ -24,6 +24,7 @@ export default function Select({
   onChange, 
   placeholder,
   loading,
+  className,
   emptyMessage = 'No options available' 
 }: SelectProps) {
   const selectId = useId();
@@ -100,7 +101,7 @@ export default function Select({
 
   return (
     <div 
-      className={styles.select}
+      className={`${styles.select} ${className || ''}`}
       role="combobox"
       aria-expanded={isOpen}
       aria-haspopup="listbox"
@@ -109,7 +110,7 @@ export default function Select({
     >
       <button 
         id={selectId}
-        className={styles.trigger}
+        className={`${styles.trigger} select-trigger`}
         onClick={() => setIsOpen(!isOpen)}
         disabled={loading}
         aria-expanded={isOpen}
