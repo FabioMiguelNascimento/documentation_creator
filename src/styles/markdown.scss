@@ -1,67 +1,72 @@
 .inlineFormatting {
-  h1 {
-    font-size: 2em;
-    margin: 0.67em 0;
-    font-weight: 600;
-  }
+  .ProseMirror {
+    h1 {
+      font-size: 2em;
+      margin: 0.67em 0;
+      font-weight: 600;
+    }
 
-  h2 {
-    font-size: 1.5em;
-    margin: 0.83em 0;
-    font-weight: 600;
-  }
+    h2 {
+      font-size: 1.5em;
+      margin: 0.83em 0;
+      font-weight: 600;
+    }
 
-  h3 {
-    font-size: 1.17em;
-    margin: 1em 0;
-    font-weight: 600;
-  }
+    h3 {
+      font-size: 1.17em;
+      margin: 1em 0;
+      font-weight: 600;
+    }
 
-  strong {
-    font-weight: 600;
-  }
+    strong {
+      font-weight: 600;
+    }
 
-  em {
-    font-style: italic;
-  }
+    em {
+      font-style: italic;
+    }
 
-  u {
-    text-decoration: underline;
-  }
-
-  s {
-    text-decoration: line-through;
-    color: var(--text-secondary);
-  }
-
-  code {
-    background: var(--tertiary-bg);
-    padding: 0.2em 0.4em;
-    border-radius: calc(var(--border-radius) * 0.5);
-    font-family: monospace;
-    font-size: 0.9em;
-  }
-
-  blockquote {
-    margin: 1em 0;
-    padding-left: 1em;
-    border-left: 3px solid var(--text-secondary);
-    color: var(--text-secondary);
-    font-style: italic;
-  }
-
-  hr {
-    margin: 2em 0;
-    border: none;
-    border-top: 1px solid var(--border-color);
-  }
-
-  a {
-    color: #0366d6;
-    text-decoration: none;
-    
-    &:hover {
+    u {
       text-decoration: underline;
+    }
+
+    s {
+      text-decoration: line-through;
+      color: var(--text-secondary);
+    }
+
+    p code,
+    p .inline-code {
+      background: var(--tertiary-bg);
+      color: var(--text-secondary);
+      border-radius: var(--border-radius);
+      font-family: monospace;
+      padding: calc(var(--spacing-unit) * 0.15) calc(var(--spacing-unit) * 0.3);
+      font-size: 0.9em;
+      display: inline;
+    }
+
+    blockquote {
+      margin: 1em 0;
+      padding-left: 1em;
+      border-left: 3px solid var(--text-secondary);
+      color: var(--text-secondary);
+      font-style: italic;
+    }
+
+    hr {
+      margin: 2em 0;
+      border: none;
+      border-top: 1px solid var(--border-color);
+    }
+
+    a {
+      color: #0366d6;
+      text-decoration: none;
+      
+      &:hover {
+        text-decoration: underline;
+      }
     }
   }
 }

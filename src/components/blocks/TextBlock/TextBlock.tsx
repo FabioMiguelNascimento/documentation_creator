@@ -4,7 +4,10 @@ import { Extension } from '@tiptap/core';
 import Link from '@tiptap/extension-link';
 import { EditorContent, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
+import { Plugin } from 'prosemirror-state';
+import { Decoration, DecorationSet } from 'prosemirror-view';
 import { useState } from "react";
+import '../../../styles/markdown.scss';
 import styles from './TextBlock.module.scss';
 
 const CodeBlockDetector = Extension.create({
@@ -19,6 +22,36 @@ const CodeBlockDetector = Extension.create({
         return currentLine.includes('```');
       }
     }
+  }
+});
+
+const Placeholder = Extension.create({
+  name: 'placeholder',
+  addProseMirrorPlugins() {
+    return [
+      new Plugin({
+        props: {
+          decorations: ({ doc }) => {
+            const active = this.editor?.isEditable && 
+              doc.textContent.length === 0 && 
+              this.editor.isFocused;
+              
+            if (!active) return DecorationSet.empty
+
+            const decorations = []
+            const decoration = Decoration.widget(0, () => {
+              const placeholder = document.createElement('span')
+              placeholder.classList.add('placeholder')
+              placeholder.textContent = this.options.placeholder
+              return placeholder
+            })
+            decorations.push(decoration)
+
+            return DecorationSet.create(doc, decorations)
+          }
+        }
+      })
+    ]
   }
 });
 
@@ -45,28 +78,24 @@ export default function TextBlock({
 
   const editor = useEditor({
     extensions: [
-      StarterKit.configure({ code: false }),
+      StarterKit.configure({
+        code: {
+          HTMLAttributes: {
+            class: 'inline-code',
+          },
+        },
+      }),
       Link,
       CodeBlockDetector,
+      Placeholder.configure({
+        placeholder: 'Start typing or insert "/" for comannds',
+      })
     ],
     content,
-    onUpdate: ({ editor }) => onChange(id, editor.getHTML()),
-    onSelectionUpdate: ({ editor }) => {
-      if (!editor.view.hasFocus() || editor.state.selection.empty) {
-        setToolbarPosition(prev => ({ ...prev, show: false }));
-        return;
-      }
-
-      const { from, to } = editor.state.selection;
-      const coords = editor.view.coordsAtPos(from);
-      
-      setToolbarPosition({
-        x: coords.left + (editor.view.coordsAtPos(to).left - coords.left) / 2,
-        y: coords.top - 10,
-        show: true
-      });
-    },
+    editable: true,
+    immediatelyRender: false,
     editorProps: {
+
       handleKeyDown: (view, event) => {
         if (!editor) return false;
         
@@ -94,8 +123,35 @@ export default function TextBlock({
         return false;
       }
     },
-    editable: true
+    onUpdate: ({ editor }) => onChange(id, editor.getHTML()),
+    onSelectionUpdate: ({ editor }) => {
+      if (!editor.view.hasFocus() || editor.state.selection.empty) {
+        setToolbarPosition(prev => ({ ...prev, show: false }));
+        return;
+      }
+
+      const { from, to } = editor.state.selection;
+      const coords = editor.view.coordsAtPos(from);
+      
+      setToolbarPosition({
+        x: coords.left + (editor.view.coordsAtPos(to).left - coords.left) / 2,
+        y: coords.top - 10,
+        show: true
+      });
+    },
   });
+
+  const handleTransformToCodeBlock = () => {
+    const selectedText = editor?.state.doc.textBetween(
+      editor.state.selection.from,
+      editor.state.selection.to,
+      ' '
+    );
+    
+    if (selectedText) {
+      onTransform?.(id, 'code', selectedText, 'javascript');
+    }
+  };
 
   return (
     <Draggable draggableId={id} index={index}>
@@ -103,19 +159,23 @@ export default function TextBlock({
         <div
           ref={provided.innerRef}
           {...provided.draggableProps}
-          className={styles.textBlock}
+          className={`${styles.textBlock} inlineFormatting`}
         >
           <div className={styles.blockControls}>
             <div {...provided.dragHandleProps} className={styles.dragHandle}>
               ⋮
             </div>
           </div>
-          <EditorContent editor={editor} className={styles.editableContent} />
+          <EditorContent 
+            editor={editor} 
+            className={styles.editableContent}
+          />
           {editor && (
             <FloatingToolbar
               editor={editor}
               show={toolbarPosition.show}
               position={toolbarPosition}
+              onTransformToCodeBlock={handleTransformToCodeBlock}
             />
           )}
         </div>

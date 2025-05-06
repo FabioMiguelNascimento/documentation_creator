@@ -50,10 +50,6 @@
   color: var(--text-color);
   text-decoration: none;
   margin-right: calc(var(--spacing-unit) * 0.5);
-  
-  &:hover {
-    text-decoration: underline;
-  }
 }
 
 .docItem {

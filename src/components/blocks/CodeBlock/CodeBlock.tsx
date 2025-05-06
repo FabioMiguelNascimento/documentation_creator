@@ -1,3 +1,4 @@
+import Select, { SelectOption } from '@/components/Select/Select';
 import { Draggable } from '@hello-pangea/dnd';
 import Prism from 'prismjs';
 import 'prismjs/components/prism-jsx';
@@ -5,6 +6,7 @@ import 'prismjs/components/prism-tsx';
 import 'prismjs/components/prism-typescript';
 import 'prismjs/themes/prism.css';
 import { useEffect, useRef, useState } from 'react';
+import { SiCss3, SiHtml5, SiJavascript, SiReact, SiSass, SiTypescript } from 'react-icons/si';
 import styles from './CodeBlock.module.scss';
 
 interface CodeBlockProps {
@@ -15,6 +17,16 @@ interface CodeBlockProps {
   onChange: (id: string, content: string, language?: string) => void;
   onDelete: (id: string) => void;
 }
+
+const languageOptions: SelectOption[] = [
+  { value: 'javascript', label: 'JavaScript', icon: <SiJavascript /> },
+  { value: 'typescript', label: 'TypeScript', icon: <SiTypescript /> },
+  { value: 'jsx', label: 'JSX', icon: <SiReact /> },
+  { value: 'tsx', label: 'TSX', icon: <SiReact /> },
+  { value: 'html', label: 'HTML', icon: <SiHtml5 /> },
+  { value: 'css', label: 'CSS', icon: <SiCss3 /> },
+  { value: 'scss', label: 'SCSS', icon: <SiSass /> },
+];
 
 export default function CodeBlock({ 
   id, 
@@ -52,6 +64,19 @@ export default function CodeBlock({
     }
 
     if (e.key === 'Enter' && e.shiftKey) {
+      const target = e.currentTarget;
+      const start = target.selectionStart;
+      const end = target.selectionEnd;
+      
+      setCode(
+        code.substring(0, start) + '\n' + code.substring(end)
+      );
+      
+      setTimeout(() => {
+        target.selectionStart = target.selectionEnd = start + 1;
+      }, 0);
+      
+      e.preventDefault();
       return;
     }
 
@@ -89,19 +114,12 @@ export default function CodeBlock({
             ⋮
           </div>
           <div className={styles.codeWrapper}>
-            <select
+            <Select
               value={language}
-              onChange={(e) => onChange(id, code, e.target.value)}
-              className={styles.languageSelect}
-            >
-              <option value="javascript">JavaScript</option>
-              <option value="typescript">TypeScript</option>
-              <option value="jsx">JSX</option>
-              <option value="tsx">TSX</option>
-              <option value="html">HTML</option>
-              <option value="css">CSS</option>
-              <option value="scss">SCSS</option>
-            </select>
+              options={languageOptions}
+              onChange={(value) => onChange(id, code, value)}
+              placeholder="Select language"
+            />
             {isEditing ? (
               <textarea
                 ref={editorRef}

@@ -21,7 +21,7 @@
 
 .content {
   flex: 1;
-  padding: calc(var(--spacing-unit) * 0.5);
+  padding: calc(var(--spacing-unit) * 0.2);
   cursor: text;
   min-height: 24px;
 }
@@ -54,10 +54,12 @@
 
   :global {
     .ProseMirror {
+      position: relative;
       outline: none;
       height: 100%;
       min-height: 24px;
-      
+      padding: calc(var(--spacing-unit) * 0.1);
+
       &:focus {
         outline: none;
       }
@@ -65,16 +67,18 @@
       p {
         margin: 0;
       }
-    }
 
-    .ProseMirror-focused {
-      outline: none;
+      .placeholder {
+        color: var(--text-placeholder);
+        pointer-events: none;
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        margin-left: .125rem;
+        opacity: 0.75;
+        user-select: none;
+      }
     }
-  }
-
-  &:empty::before {
-    content: "Digite algo...";
-    color: var(--text-placeholder);
   }
 
   &:focus-within {
