@@ -1,25 +1,28 @@
 'use client';
 import CodeBlock from '@/components/blocks/CodeBlock/CodeBlock';
-import ListBlock from '@/components/blocks/ListBlock/ListBlock';
 import TextBlock from '@/components/blocks/TextBlock/TextBlock';
+import { BlockProvider, useBlocks } from '@/contexts/BlockContext';
 import { Block, Documentation } from '@/types/documentation';
 import { DragDropContext, Droppable, DropResult } from '@hello-pangea/dnd';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import styles from './page.module.scss';
 
-export default function DocPage() {
-  const params = useParams();
-  const [doc, setDoc] = useState<Documentation | null>(null);
+function DocContent({ doc, setDoc }: { doc: Documentation; setDoc: (doc: Documentation) => void }) {
+  const { setInitialBlocks } = useBlocks();
 
   useEffect(() => {
-    const savedDocs = localStorage.getItem('docs');
-    if (savedDocs) {
-      const docs: Documentation[] = JSON.parse(savedDocs);
-      const currentDoc = docs.find(d => d.slug === params.slug);
-      if (currentDoc) setDoc(currentDoc);
+    if (doc) {
+      const savedDocs = localStorage.getItem('docs');
+      if (savedDocs) {
+        const docs = JSON.parse(savedDocs);
+        const currentDoc = docs.find((d: Documentation) => d.id === doc.id);
+        if (currentDoc) {
+          setInitialBlocks(currentDoc.blocks);
+        }
+      }
     }
-  }, [params.slug]);
+  }, [doc, setInitialBlocks]);
 
   const handleTitleChange = (newTitle: string) => {
     if (!doc) return;
@@ -33,7 +36,7 @@ export default function DocPage() {
     updateDocument(updatedDoc);
   };
 
-  const handleCreateBlock = (type: 'text' | 'list' | 'code' = 'text') => {
+  const handleCreateBlock = (type: 'text' | 'code' = 'text') => {
     if (!doc) return;
 
     const newBlock = {
@@ -50,6 +53,47 @@ export default function DocPage() {
     };
 
     updateDocument(updatedDoc);
+  };
+
+  const handleCreateBlockAfter = (afterBlockId: string, type: 'text' | 'code' = 'text') => {
+    if (!doc) return;
+
+    const blocks = doc.blocks;
+    const blockIndex = blocks.findIndex(b => b.id === afterBlockId);
+    if (blockIndex === -1) return;
+
+    const currentBlock = blocks[blockIndex];
+    const previousOrder = currentBlock?.order || 0;
+    const newBlock = {
+      id: `block-${Date.now()}`,
+      type,
+      content: '',
+      order: previousOrder + 1,
+    };
+
+    const updatedBlocks = [
+      ...blocks.slice(0, blockIndex + 1),
+      newBlock,
+      ...blocks.slice(blockIndex + 1)
+    ].map((block, index) => ({ ...block, order: index }));
+
+    const updatedDoc = {
+      ...doc,
+      blocks: updatedBlocks,
+      updatedAt: new Date().toISOString()
+    };
+
+    updateDocument(updatedDoc);
+
+    setTimeout(() => {
+      const newBlockElement = document.getElementById(newBlock.id);
+      if (newBlockElement) {
+        const editableContent = newBlockElement.querySelector('[contenteditable]');
+        editableContent?.focus();
+      }
+    }, 0);
+
+    return newBlock.id;
   };
 
   const handleBlockChange = (blockId: string, content: string) => {
@@ -71,6 +115,9 @@ export default function DocPage() {
   const handleDeleteBlock = (blockId: string) => {
     if (!doc) return;
 
+    const blockIndex = doc.blocks.findIndex(block => block.id === blockId);
+    const nextBlockId = doc.blocks[blockIndex + 1]?.id || doc.blocks[blockIndex - 1]?.id;
+
     const updatedDoc = {
       ...doc,
       blocks: doc.blocks.filter(block => block.id !== blockId),
@@ -78,6 +125,17 @@ export default function DocPage() {
     };
 
     updateDocument(updatedDoc);
+
+    // Foca o próximo bloco
+    if (nextBlockId) {
+      setTimeout(() => {
+        const nextBlock = document.getElementById(nextBlockId);
+        if (nextBlock) {
+          const editableContent = nextBlock.querySelector('[contenteditable]');
+          editableContent?.focus();
+        }
+      }, 0);
+    }
   };
 
   const handleDragEnd = (result: DropResult) => {
@@ -98,7 +156,7 @@ export default function DocPage() {
 
   const handleTransformBlock = (
     blockId: string, 
-    newType: 'text' | 'list' | 'code', 
+    newType: 'text' | 'code', 
     content: string,
     language?: string
   ) => {
@@ -146,38 +204,24 @@ export default function DocPage() {
       id: block.id,
       content: block.content,
       index,
+      onChange: handleBlockChange,
       onDelete: handleDeleteBlock,
-      onTransform: handleTransformBlock
+      onTransform: handleTransformBlock,
+      onEnter: (blockId: string) => handleCreateBlockAfter(blockId)
     };
 
     switch (block.type) {
-      case 'list':
-        return (
-          <ListBlock
-            {...commonProps}
-            onChange={handleBlockChange}
-            onEnter={() => handleCreateBlock('list')}
-          />
-        );
       case 'code':
         return (
           <CodeBlock
             {...commonProps}
             language={block.language}
-            onChange={(id, content, language) => {
-              const updatedBlocks = doc.blocks.map(b =>
-                b.id === id ? { ...b, content, language } : b
-              );
-              updateDocument({ ...doc, blocks: updatedBlocks });
-            }}
           />
         );
       default:
         return (
           <TextBlock
             {...commonProps}
-            onChange={handleBlockChange}
-            onEnter={() => handleCreateBlock('text')}
           />
         );
     }
@@ -188,8 +232,6 @@ export default function DocPage() {
       handleCreateBlock('text');
     }
   }, [doc?.blocks]);
-
-  if (!doc) return <div>Carregando...</div>;
 
   return (
     <div className={styles.docContainer}>
@@ -234,5 +276,31 @@ export default function DocPage() {
         </button>
       )}
     </div>
+  );
+}
+
+export default function DocPage() {
+  const params = useParams();
+  const [doc, setDoc] = useState<Documentation | null>(null);
+
+  useEffect(() => {
+    const savedDocs = localStorage.getItem('docs');
+    if (savedDocs) {
+      const docs: Documentation[] = JSON.parse(savedDocs);
+      const currentDoc = docs.find(d => d.slug === params.slug);
+      if (currentDoc) setDoc(currentDoc);
+    }
+  }, [params.slug]);
+
+  if (!doc) return (
+    <div className={styles.loading}>
+      <div className={styles.spinner}></div>
+    </div>
+  )
+
+  return (
+    <BlockProvider>
+      <DocContent doc={doc} setDoc={setDoc} />
+    </BlockProvider>
   );
 }

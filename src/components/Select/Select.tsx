@@ -17,6 +17,7 @@ interface SelectProps {
   loading?: boolean;
   emptyMessage?: string;
   className?: string;
+  onClickTrigger?: (e: React.MouseEvent) => void;
 }
 
 export default function Select({ 
@@ -26,7 +27,8 @@ export default function Select({
   placeholder,
   loading,
   className,
-  emptyMessage = 'No options available' 
+  emptyMessage = 'No options available',
+  onClickTrigger 
 }: SelectProps) {
   const selectId = useId();
   const listboxId = useId();
@@ -73,6 +75,7 @@ export default function Select({
   const handleTriggerClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    onClickTrigger?.(e);
     setIsOpen(!isOpen);
   };
 

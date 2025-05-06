@@ -22,9 +22,6 @@ export default function BlockCreator({ onCreateBlock }: BlockCreatorProps) {
       <button onClick={() => createBlock('text')}>
         + Texto
       </button>
-      <button onClick={() => createBlock('list')}>
-        + Lista
-      </button>
       <button onClick={() => createBlock('code')}>
         + Código
       </button>

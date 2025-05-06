@@ -1,4 +1,5 @@
 import FloatingToolbar from '@/components/FloatingToolbar/FloatingToolbar';
+import { useTextBlock } from '@/hooks/useTextBlock';
 import { Draggable } from "@hello-pangea/dnd";
 import { Extension } from '@tiptap/core';
 import { Color } from '@tiptap/extension-color';
@@ -63,26 +64,30 @@ interface TextBlockProps {
   content: string;
   index: number;
   onChange: (id: string, content: string) => void;
-  onEnter: () => void;
+  onEnter: (id: string) => string;
   onDelete: (id: string) => void;
   onTransform?: (id: string, type: 'text' | 'list' | 'code', content: string, language?: string) => void;
 }
 
-export default function TextBlock({
-  id,
-  content,
+export default function TextBlock({ 
+  id, 
+  content, 
   index,
   onChange,
-  onEnter,
   onDelete,
   onTransform,
+  onEnter
 }: TextBlockProps) {
+  const { handleUpdate } = useTextBlock(id);
   const [toolbarPosition, setToolbarPosition] = useState({ x: 0, y: 0, show: false });
+  const [isTransforming, setIsTransforming] = useState(false);
   const blockRef = useRef<HTMLDivElement>(null);
+  const toolbarRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (!blockRef.current?.contains(event.target as Node)) {
+      if (!blockRef.current?.contains(event.target as Node) && 
+          !toolbarRef.current?.contains(event.target as Node)) {
         setToolbarPosition(prev => ({ ...prev, show: false }));
       }
     };
@@ -121,34 +126,56 @@ export default function TextBlock({
       attributes: {
         contenteditable: 'true',
       },
-      handleKeyDown: (view, event) => {
+      handleKeyDown: (_, event) => {
         if (!editor) return false;
-        
+
         const { from } = editor.state.selection;
         const $pos = editor.state.doc.resolve(from);
         const currentLine = editor.state.doc.textBetween($pos.start(), $pos.end());
 
-        if (currentLine.startsWith('```') && event.key === 'Enter') {
-          const [, language] = currentLine.match(/^```(\w*)/) || ['', 'javascript'];
+        if ((event.key === 'Backspace' || event.key === 'Delete') && editor.isEmpty) {
           event.preventDefault();
-          onTransform?.(id, 'code', '', language);
-          return true;
-        }
-
-        if (event.key === 'Enter' && !event.shiftKey && !currentLine.startsWith('```')) {
-          onEnter();
-          return true;
-        }
-
-        if (event.key === 'Backspace' && editor.isEmpty) {
+          event.stopPropagation();
           onDelete(id);
+          return true;
+        }
+
+        if (event.key === 'Enter' && !event.shiftKey) {
+          event.preventDefault();
+
+          const codeBlockMatch = currentLine.match(/^```(\w*)$/);
+          if (codeBlockMatch) {
+            const [, language] = codeBlockMatch;
+            onTransform(id, 'code', '', language || 'javascript');
+            return true;
+          }
+
+          onEnter(id);
           return true;
         }
 
         return false;
       }
     },
-    onUpdate: ({ editor }) => onChange(id, editor.getHTML()),
+    onUpdate: ({ editor }) => {
+      if (isTransforming) return;
+
+      const content = editor.getHTML();
+      const text = editor.getText();
+      
+      const codeBlockMatch = text.match(/^```(\w*)$/);
+      if (codeBlockMatch) {
+        const [, language] = codeBlockMatch;
+        setIsTransforming(true);
+        onTransform(id, 'code', '', language || 'javascript');
+        setTimeout(() => {
+          setIsTransforming(false);
+        }, 0);
+        return;
+      }
+
+      onChange(id, content);
+    },
     onSelectionUpdate: ({ editor }) => {
       if (!editor.view.hasFocus() || editor.state.selection.empty) {
         setToolbarPosition(prev => ({ ...prev, show: false }));
@@ -174,7 +201,7 @@ export default function TextBlock({
     );
     
     if (selectedText) {
-      onTransform?.(id, 'code', selectedText, 'javascript');
+      onTransform(id, 'code', selectedText, 'javascript');
     }
   };
 
@@ -182,6 +209,7 @@ export default function TextBlock({
     <Draggable draggableId={id} index={index}>
       {(provided) => (
         <div
+          id={id}
           ref={(node) => {
             blockRef.current = node;
             provided.innerRef(node);
@@ -200,6 +228,7 @@ export default function TextBlock({
           />
           {editor && (
             <FloatingToolbar
+              ref={toolbarRef}
               editor={editor}
               show={toolbarPosition.show}
               position={toolbarPosition}
