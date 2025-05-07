@@ -1,4 +1,6 @@
 import Select, { SelectOption } from '@/components/Select/Select';
+import { useSelection } from '@/contexts/SelectionContext';
+import { withSelectable } from '@/hocs/withSelectable';
 import { useCodeBlock } from '@/hooks/useCodeBlock';
 import '@/styles/prism-theme.scss';
 import { Draggable } from '@hello-pangea/dnd';
@@ -32,18 +34,11 @@ const languageOptions: SelectOption[] = [
   { value: 'mysql', label: 'MySQL', icon: <SiMysql /> }
 ];
 
-export default function CodeBlock({ 
-  id, 
-  content, 
-  language = 'javascript',
-  index,
-  onDelete,
-  onChange,
-  onEnter
-}: CodeBlockProps) {
+const CodeBlockComponent = ({ id, index, ...props }: CodeBlockProps) => {
   const { handleUpdate } = useCodeBlock(id);
+  const { state } = useSelection();
   const preRef = useRef<HTMLPreElement>(null);
-  const [currentLanguage, setCurrentLanguage] = useState(language);
+  const [currentLanguage, setCurrentLanguage] = useState(props.language || 'javascript');
 
   const updateCodeHighlight = useCallback(() => {
     if (!preRef.current) return;
@@ -105,11 +100,11 @@ export default function CodeBlock({
 
   useEffect(() => {
     updateCodeHighlight();
-  }, [content, currentLanguage]);
+  }, [props.content, currentLanguage]);
 
   const handleLanguageChange = (newLang: string) => {
     setCurrentLanguage(newLang);
-    onChange(id, content, newLang);
+    props.onChange(id, props.content, newLang);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLPreElement>) => {
@@ -118,13 +113,13 @@ export default function CodeBlock({
     if ((e.key === 'Backspace' || e.key === 'Delete') && isEmpty) {
       e.preventDefault();
       e.stopPropagation();
-      onDelete(id);
+      props.onDelete(id);
       return;
     }
 
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      const newBlockId = onEnter(id);
+      const newBlockId = props.onEnter(id);
       return;
     }
 
@@ -141,7 +136,7 @@ export default function CodeBlock({
   };
 
   return (
-    <Draggable draggableId={id} index={index}>
+    <Draggable draggableId={String(id)} index={index} isDragDisabled={state.isSelecting}>
       {(provided) => (
         <div
           id={id}
@@ -169,15 +164,17 @@ export default function CodeBlock({
               suppressContentEditableWarning
               onInput={(e) => {
                 const content = e.currentTarget.textContent || '';
-                onChange(id, content, currentLanguage);
+                props.onChange(id, content, currentLanguage);
                 updateCodeHighlight();
               }}
             >
-              <code>{content}</code>
+              <code>{props.content}</code>
             </pre>
           </div>
         </div>
       )}
     </Draggable>
   );
-}
+};
+
+export const CodeBlock = withSelectable(CodeBlockComponent);

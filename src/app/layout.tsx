@@ -1,4 +1,7 @@
-import ClientLayout from '@/components/ClientLayout/ClientLayout';
+"use client";
+
+import { ClientLayout } from '@/components/ClientLayout/ClientLayout';
+import { SelectionProvider } from '@/contexts/SelectionContext';
 import './globals.scss';
 
 export default function RootLayout({
@@ -7,11 +10,13 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="pt-BR">
+    <html lang="en">
       <body>
-        <ClientLayout>
-          {children}
-        </ClientLayout>
+        <SelectionProvider>
+          <ClientLayout>
+            {children}
+          </ClientLayout>
+        </SelectionProvider>
       </body>
     </html>
   );

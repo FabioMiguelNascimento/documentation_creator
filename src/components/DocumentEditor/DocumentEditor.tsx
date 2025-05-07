@@ -1,8 +1,12 @@
-import { Block } from '@/types/documentation'
-import { DragDropContext, Droppable, DropResult } from '@hello-pangea/dnd'
-import CodeBlock from '../blocks/CodeBlock/CodeBlock'
-import TextBlock from '../blocks/TextBlock/TextBlock'
-import styles from './DocumentEditor.module.scss'
+"use client";
+
+import { useSelection } from '@/contexts/SelectionContext';
+import { Block } from '@/types/documentation';
+import { DragDropContext, Droppable, DropResult } from '@hello-pangea/dnd';
+import CodeBlock from '../blocks/CodeBlock/CodeBlock';
+import TextBlock from '../blocks/TextBlock/TextBlock';
+import { SelectionPane } from '../SelectionPane/SelectionPane';
+import styles from './DocumentEditor.module.scss';
 
 interface DocumentEditorProps {
   blocks: Block[]
@@ -10,6 +14,8 @@ interface DocumentEditorProps {
 }
 
 export default function DocumentEditor({ blocks, onChange }: DocumentEditorProps) {
+  const { startSelection, updateSelection, endSelection } = useSelection();
+
   const handleDragEnd = (result: DropResult) => {
     if (!result.destination) return
     const reorderedBlocks = Array.from(blocks)
@@ -19,26 +25,39 @@ export default function DocumentEditor({ blocks, onChange }: DocumentEditorProps
   }
 
   return (
-    <DragDropContext onDragEnd={handleDragEnd}>
-      <Droppable droppableId="blocks">
-        {(provided) => (
-          <div
-            {...provided.droppableProps}
-            ref={provided.innerRef}
-            className={styles.editor}
-          >
-            {blocks.map((block, index) => {
-              switch (block.type) {
-                case 'code':
-                  return <CodeBlock key={block.id} {...block} index={index} />
-                default:
-                  return <TextBlock key={block.id} {...block} index={index} />
-              }
-            })}
-            {provided.placeholder}
+    <main 
+      className={styles.editor}
+      onMouseDown={(e) => startSelection(e.clientX, e.clientY)}
+      onMouseMove={(e) => updateSelection(e.clientX, e.clientY)}
+      onMouseUp={endSelection}
+      onMouseLeave={endSelection}
+    >
+      <div className={styles.container}>
+        <SelectionPane />
+        <DragDropContext onDragEnd={handleDragEnd}>
+          <div className={styles.blocksWrapper}>
+            <Droppable droppableId="blocks">
+              {(provided) => (
+                <div
+                  {...provided.droppableProps}
+                  ref={provided.innerRef}
+                  className={styles.editor}
+                >
+                  {blocks.map((block, index) => {
+                    switch (block.type) {
+                      case 'code':
+                        return <CodeBlock key={block.id} {...block} index={index} />
+                      default:
+                        return <TextBlock key={block.id} {...block} index={index} />
+                    }
+                  })}
+                  {provided.placeholder}
+                </div>
+              )}
+            </Droppable>
           </div>
-        )}
-      </Droppable>
-    </DragDropContext>
-  )
+        </DragDropContext>
+      </div>
+    </main>
+  );
 }

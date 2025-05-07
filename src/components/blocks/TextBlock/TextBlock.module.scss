@@ -2,7 +2,7 @@
   position: relative;
   display: flex;
   gap: calc(var(--spacing-unit) * 0.5);
-  padding: calc(var(--spacing-unit) * 0.5);
+  padding: calc(var(--spacing-unit) * 0.3);
 
   &:hover {
     background-color: var(--secondary-bg);
@@ -47,7 +47,7 @@
 .editableContent {
   flex: 1;
   min-height: 24px;
-  padding: calc(var(--spacing-unit) * 0.5);
+  padding: calc(var(--spacing-unit) * 0.3);
   outline: none;
   white-space: pre-wrap;
   word-break: break-word;

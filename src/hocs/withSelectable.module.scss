@@ -1,0 +1,49 @@
+.selectable {
+  position: relative;
+  transition: background-color 0.15s ease;
+  border-radius: 4px;
+
+  &:hover::before {
+    border-color: rgba(35, 131, 226, 0.2);
+  }
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border: 2px solid transparent;
+    border-radius: 4px;
+    transition: border-color 0.15s ease;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  &.selected {
+    background-color: var(--selection-color);
+    border-radius: var(--border-radius);
+    transition: background-color 0.1s ease;
+
+    &::before {
+      border-color: rgba(35, 131, 226, 0.4);
+    }
+  }
+
+  * {
+    pointer-events: auto;
+  }
+
+  &[data-selecting="true"] {
+    user-select: none;
+    pointer-events: none;
+
+    .ProseMirror, 
+    [contenteditable="true"], 
+    pre[contenteditable="true"],
+    .tiptap, 
+    * {
+      pointer-events: none !important;
+      user-select: none !important;
+      cursor: default !important;
+    }
+  }
+}

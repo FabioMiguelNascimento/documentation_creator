@@ -1,4 +1,6 @@
 import FloatingToolbar from '@/components/FloatingToolbar/FloatingToolbar';
+import { useSelection } from '@/contexts/SelectionContext';
+import { withSelectable } from '@/hocs/withSelectable';
 import { useTextBlock } from '@/hooks/useTextBlock';
 import { Draggable } from "@hello-pangea/dnd";
 import { Extension } from '@tiptap/core';
@@ -64,21 +66,14 @@ interface TextBlockProps {
   content: string;
   index: number;
   onChange: (id: string, content: string) => void;
-  onEnter: (id: string) => string;
   onDelete: (id: string) => void;
-  onTransform?: (id: string, type: 'text' | 'list' | 'code', content: string, language?: string) => void;
+  onTransform: (id: string, type: string) => void;
+  onEnter: (id: string) => void;
 }
 
-export default function TextBlock({ 
-  id, 
-  content, 
-  index,
-  onChange,
-  onDelete,
-  onTransform,
-  onEnter
-}: TextBlockProps) {
+const TextBlockComponent = ({ id, index, ...props }: TextBlockProps) => {
   const { handleUpdate } = useTextBlock(id);
+  const { state } = useSelection();
   const [toolbarPosition, setToolbarPosition] = useState({ x: 0, y: 0, show: false });
   const [isTransforming, setIsTransforming] = useState(false);
   const blockRef = useRef<HTMLDivElement>(null);
@@ -119,7 +114,7 @@ export default function TextBlock({
         },
       })
     ],
-    content,
+    content: props.content,
     editable: true,
     immediatelyRender: false,
     editorProps: {
@@ -136,7 +131,7 @@ export default function TextBlock({
         if ((event.key === 'Backspace' || event.key === 'Delete') && editor.isEmpty) {
           event.preventDefault();
           event.stopPropagation();
-          onDelete(id);
+          props.onDelete(id);
           return true;
         }
 
@@ -146,11 +141,11 @@ export default function TextBlock({
           const codeBlockMatch = currentLine.match(/^```(\w*)$/);
           if (codeBlockMatch) {
             const [, language] = codeBlockMatch;
-            onTransform(id, 'code', '', language || 'javascript');
+            props.onTransform(id, 'code', '', language || 'javascript');
             return true;
           }
 
-          onEnter(id);
+          props.onEnter(id);
           return true;
         }
 
@@ -167,14 +162,14 @@ export default function TextBlock({
       if (codeBlockMatch) {
         const [, language] = codeBlockMatch;
         setIsTransforming(true);
-        onTransform(id, 'code', '', language || 'javascript');
+        props.onTransform(id, 'code', '', language || 'javascript');
         setTimeout(() => {
           setIsTransforming(false);
         }, 0);
         return;
       }
 
-      onChange(id, content);
+      props.onChange(id, content);
     },
     onSelectionUpdate: ({ editor }) => {
       if (!editor.view.hasFocus() || editor.state.selection.empty) {
@@ -201,12 +196,12 @@ export default function TextBlock({
     );
     
     if (selectedText) {
-      onTransform(id, 'code', selectedText, 'javascript');
+      props.onTransform(id, 'code', selectedText, 'javascript');
     }
   };
 
   return (
-    <Draggable draggableId={id} index={index}>
+    <Draggable draggableId={String(id)} index={index} isDragDisabled={state.isSelecting}>
       {(provided) => (
         <div
           id={id}
@@ -239,4 +234,6 @@ export default function TextBlock({
       )}
     </Draggable>
   );
-}
+};
+
+export const TextBlock = withSelectable(TextBlockComponent);

@@ -1,4 +1,6 @@
 .editor {
+  flex: 1;
+  position: relative;
   width: 100%;
   min-height: 200px;
   padding: var(--spacing-unit);
@@ -28,4 +30,22 @@
     background: var(--secondary-bg);
     border-radius: var(--border-radius);
   }
+}
+
+.blocksWrapper {
+  position: relative;
+  height: 100%;
+}
+
+.blocks {
+  position: relative;
+  min-height: 100px;
+  padding: 1rem;
+}
+
+.container {
+  position: relative;
+  flex: 1;
+  height: 100%;
+  user-select: none;
 }

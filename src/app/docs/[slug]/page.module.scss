@@ -1,12 +1,14 @@
 .docContainer {
+  position: relative;
+  min-height: 100%;
   padding: calc(var(--spacing-unit) * 2);
-  max-width: 1200px;
+  max-width: 800px;
   margin: 0 auto;
 
   header {
     margin-bottom: calc(var(--spacing-unit) * 2);
-    padding-bottom: var(--spacing-unit);
     border-bottom: 1px solid var(--border-color);
+    margin: var(--spacing-unit) calc(var(--spacing-unit) * 2.5) var(--spacing-unit);
 
     h1 {
       font-size: 2rem;

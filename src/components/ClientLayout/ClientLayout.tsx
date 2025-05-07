@@ -1,17 +1,49 @@
 'use client';
+import { SelectionPane } from '@/components/SelectionPane/SelectionPane';
+import { SelectionProvider, useSelection } from '@/contexts/SelectionContext';
+import { useEffect } from 'react';
 import Navigation from '../Navigation/Navigation';
 
-export default function ClientLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+function MainContent({ children }: { children: React.ReactNode }) {
+  const { startSelection, updateSelection, endSelection } = useSelection();
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      updateSelection(e.clientX, e.clientY);
+    };
+
+    const handleMouseUp = () => {
+      endSelection();
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [updateSelection, endSelection]);
+
   return (
-    <div style={{ display: 'flex' }}>
-      <Navigation />
-      <main style={{ flex: 1 }}>
-        {children}
-      </main>
-    </div>
+    <main 
+      className="teste" 
+      style={{ flex: 1, position: 'relative' }}
+      onMouseDown={(e) => startSelection(e.clientX, e.clientY, e)}
+    >
+      <SelectionPane />
+      {children}
+    </main>
   );
 }
+
+export const ClientLayout = ({ children }: { children: React.ReactNode }) => {
+  return (
+    <SelectionProvider>
+      <div style={{ display: 'flex' }}>
+        <Navigation />
+        <MainContent>{children}</MainContent>
+      </div>
+    </SelectionProvider>
+  );
+};

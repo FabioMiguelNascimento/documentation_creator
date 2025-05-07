@@ -1,7 +1,9 @@
 'use client';
-import CodeBlock from '@/components/blocks/CodeBlock/CodeBlock';
-import TextBlock from '@/components/blocks/TextBlock/TextBlock';
+import { CodeBlock } from '@/components/blocks/CodeBlock/CodeBlock';
+import { TextBlock } from '@/components/blocks/TextBlock/TextBlock';
 import { BlockProvider, useBlocks } from '@/contexts/BlockContext';
+import { useSelection } from '@/contexts/SelectionContext';
+import { useMouseDrag } from '@/hooks/useMouseDrag';
 import { Block, Documentation } from '@/types/documentation';
 import { DragDropContext, Droppable, DropResult } from '@hello-pangea/dnd';
 import { useParams } from 'next/navigation';
@@ -10,6 +12,8 @@ import styles from './page.module.scss';
 
 function DocContent({ doc, setDoc }: { doc: Documentation; setDoc: (doc: Documentation) => void }) {
   const { setInitialBlocks } = useBlocks();
+  const { startDrag, updateDrag, endDrag } = useMouseDrag();
+  const { startSelection, updateSelection, endSelection } = useSelection();
 
   useEffect(() => {
     if (doc) {
@@ -23,6 +27,107 @@ function DocContent({ doc, setDoc }: { doc: Documentation; setDoc: (doc: Documen
       }
     }
   }, [doc, setInitialBlocks]);
+
+  useEffect(() => {
+    const handleDeleteSelectedBlocks = (e: CustomEvent<{ ids: string[] }>) => {
+      if (!doc) return;
+      
+      const updatedDoc = {
+        ...doc,
+        blocks: doc.blocks.filter(block => !e.detail.ids.includes(block.id)),
+        updatedAt: new Date().toISOString()
+      };
+
+      updateDocument(updatedDoc);
+    };
+
+    document.addEventListener('deleteSelectedBlocks', handleDeleteSelectedBlocks as EventListener);
+    return () => document.removeEventListener('deleteSelectedBlocks', handleDeleteSelectedBlocks as EventListener);
+  }, [doc]);
+
+  useEffect(() => {
+    const handleCopyBlocks = (e: CustomEvent<{ ids: string[] }>) => {
+      if (!doc) return;
+      
+      const blocksToCopy = doc.blocks
+        .filter(block => e.detail.ids.includes(block.id))
+        .map(({ id, ...block }, index) => ({
+          ...block,
+          id: `block-${Date.now() + index}-${Math.random().toString(36).slice(2)}`,
+          order: doc.blocks.length + index
+        }));
+
+      localStorage.setItem('clipboard-blocks', JSON.stringify(blocksToCopy));
+    };
+
+    const handlePasteBlocks = () => {
+      const savedBlocks = localStorage.getItem('clipboard-blocks');
+      if (!savedBlocks || !doc) return;
+
+      const blocksToPaste = JSON.parse(savedBlocks).map((block: Block, index: number) => ({
+        ...block,
+        id: `block-${Date.now() + index}-${Math.random().toString(36).slice(2)}`,
+        order: doc.blocks.length + index
+      }));
+
+      const updatedDoc = {
+        ...doc,
+        blocks: [...doc.blocks, ...blocksToPaste].map((block, index) => ({
+          ...block,
+          order: index
+        })),
+        updatedAt: new Date().toISOString()
+      };
+
+      updateDocument(updatedDoc);
+    };
+
+    document.addEventListener('copySelectedBlocks', handleCopyBlocks as EventListener);
+    document.addEventListener('pasteBlocks', handlePasteBlocks);
+
+    return () => {
+      document.removeEventListener('copySelectedBlocks', handleCopyBlocks as EventListener);
+      document.removeEventListener('pasteBlocks', handlePasteBlocks);
+    };
+  }, [doc]);
+
+  useEffect(() => {
+    const handleMoveBlocks = (e: CustomEvent<{ ids: string[], direction: 'up' | 'down' }>) => {
+      if (!doc) return;
+
+      const blocks = [...doc.blocks];
+      const orderedIds = blocks.map(block => block.id);
+      const selectedIndices = e.detail.ids
+        .map(id => orderedIds.indexOf(id))
+        .filter(index => index !== -1)
+        .sort((a, b) => e.detail.direction === 'up' ? a - b : b - a);
+
+      if (selectedIndices.length === 0 ||
+          (e.detail.direction === 'up' && selectedIndices[0] <= 0) ||
+          (e.detail.direction === 'down' && selectedIndices[selectedIndices.length - 1] >= blocks.length - 1)) {
+        return;
+      }
+
+      const newBlocks = [...blocks];
+      selectedIndices.forEach(currentIndex => {
+        const targetIndex = e.detail.direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+        const temp = newBlocks[targetIndex];
+        newBlocks[targetIndex] = newBlocks[currentIndex];
+        newBlocks[currentIndex] = temp;
+      });
+
+      requestAnimationFrame(() => {
+        updateDocument({
+          ...doc,
+          blocks: newBlocks.map((block, index) => ({ ...block, order: index })),
+          updatedAt: new Date().toISOString()
+        });
+      });
+    };
+
+    document.addEventListener('moveSelectedBlocks', handleMoveBlocks as EventListener);
+    return () => document.removeEventListener('moveSelectedBlocks', handleMoveBlocks as EventListener);
+  }, [doc]);
 
   const handleTitleChange = (newTitle: string) => {
     if (!doc) return;
@@ -126,7 +231,6 @@ function DocContent({ doc, setDoc }: { doc: Documentation; setDoc: (doc: Documen
 
     updateDocument(updatedDoc);
 
-    // Foca o próximo bloco
     if (nextBlockId) {
       setTimeout(() => {
         const nextBlock = document.getElementById(nextBlockId);
@@ -199,28 +303,30 @@ function DocContent({ doc, setDoc }: { doc: Documentation; setDoc: (doc: Documen
   };
 
   const renderBlock = (block: Block, index: number) => {
+    const { id, type, content } = block;
+
     const commonProps = {
-      key: block.id,
-      id: block.id,
-      content: block.content,
+      id,
+      content,
       index,
       onChange: handleBlockChange,
       onDelete: handleDeleteBlock,
       onTransform: handleTransformBlock,
-      onEnter: (blockId: string) => handleCreateBlockAfter(blockId)
+      onEnter: handleCreateBlockAfter
     };
 
-    switch (block.type) {
+    switch (type) {
       case 'code':
         return (
           <CodeBlock
+            key={id}
             {...commonProps}
-            language={block.language}
           />
         );
       default:
         return (
           <TextBlock
+            key={id}
             {...commonProps}
           />
         );
@@ -296,7 +402,7 @@ export default function DocPage() {
     <div className={styles.loading}>
       <div className={styles.spinner}></div>
     </div>
-  )
+  );
 
   return (
     <BlockProvider>
