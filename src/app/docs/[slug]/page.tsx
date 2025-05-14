@@ -4,6 +4,7 @@ import { TextBlock } from '@/components/blocks/TextBlock/TextBlock';
 import { BlockProvider, useBlocks } from '@/contexts/BlockContext';
 import { useSelection } from '@/contexts/SelectionContext';
 import { useMouseDrag } from '@/hooks/useMouseDrag';
+import { documentStorage } from '@/services/documentStorage';
 import { Block, Documentation } from '@/types/documentation';
 import { DragDropContext, Droppable, DropResult } from '@hello-pangea/dnd';
 import { useParams } from 'next/navigation';
@@ -129,9 +130,26 @@ function DocContent({ doc, setDoc }: { doc: Documentation; setDoc: (doc: Documen
     return () => document.removeEventListener('moveSelectedBlocks', handleMoveBlocks as EventListener);
   }, [doc]);
 
+  useEffect(() => {
+    const handleDocUpdate = (e: CustomEvent<{ doc: Documentation }>) => {
+      if (e.detail.doc.id === doc?.id) {
+        setDoc(e.detail.doc);
+      }
+    };
+
+    document.addEventListener('docUpdated', handleDocUpdate as EventListener);
+    return () => document.removeEventListener('docUpdated', handleDocUpdate as EventListener);
+  }, [doc?.id, setDoc]);
+
   const handleTitleChange = (newTitle: string) => {
     if (!doc) return;
-    const updatedDoc = { ...doc, title: newTitle, updatedAt: new Date().toISOString() };
+    
+    const title = newTitle.trim() || 'New Doc';
+    const updatedDoc = { 
+      ...doc, 
+      title, 
+      updatedAt: new Date().toISOString() 
+    };
     updateDocument(updatedDoc);
   };
 
@@ -287,13 +305,8 @@ function DocContent({ doc, setDoc }: { doc: Documentation; setDoc: (doc: Documen
   };
 
   const updateDocument = (updatedDoc: Documentation) => {
-    const savedDocs = localStorage.getItem('docs');
-    if (savedDocs) {
-      const docs: Documentation[] = JSON.parse(savedDocs);
-      const updatedDocs = docs.map(d => d.id === updatedDoc.id ? updatedDoc : d);
-      localStorage.setItem('docs', JSON.stringify(updatedDocs));
-      setDoc(updatedDoc);
-    }
+    documentStorage.update(updatedDoc);
+    setDoc(updatedDoc);
   };
 
   const hasEmptyBlockAtEnd = () => {
@@ -347,6 +360,12 @@ function DocContent({ doc, setDoc }: { doc: Documentation; setDoc: (doc: Documen
           suppressContentEditableWarning
           className={styles.editableTitle}
           onBlur={(e) => handleTitleChange(e.currentTarget.textContent || '')}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              e.currentTarget.blur();
+            }
+          }}
         >
           {doc.title}
         </div>

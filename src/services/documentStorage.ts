@@ -1,25 +1,27 @@
-import { Block } from "@/types/documentation";
-
-const STORAGE_KEY = 'doc-builder-blocks';
+import { Documentation } from "@/types/documentation";
 
 export const documentStorage = {
-  saveBlocks: (blocks: Block[]) => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(blocks));
-      return true;
-    } catch (error) {
-      console.error('Error saving blocks:', error);
-      return false;
+  save(docs: Documentation[], notify = false) {
+    localStorage.setItem("docs", JSON.stringify(docs));
+    if (notify) {
+      document.dispatchEvent(new CustomEvent('docsUpdated'));
     }
   },
 
-  getBlocks: (): Block[] => {
-    try {
-      const blocks = localStorage.getItem(STORAGE_KEY);
-      return blocks ? JSON.parse(blocks) : [];
-    } catch (error) {
-      console.error('Error getting blocks:', error);
-      return [];
+  get(): Documentation[] {
+    const savedDocs = localStorage.getItem("docs");
+    return savedDocs ? JSON.parse(savedDocs) : [];
+  },
+
+  update(doc: Documentation, notify = true) {
+    const docs = this.get();
+    const updatedDocs = docs.map(d => d.id === doc.id ? doc : d);
+    localStorage.setItem("docs", JSON.stringify(updatedDocs));
+    
+    if (notify) {
+      document.dispatchEvent(new CustomEvent('docUpdated', { 
+        detail: { doc } 
+      }));
     }
   }
 };

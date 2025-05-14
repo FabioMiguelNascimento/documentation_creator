@@ -7,33 +7,61 @@
   position: sticky;
   top: 0;
   left: 0;
+  position: relative;
+  resize: horizontal;
+  max-width: 600px;
+  min-width: 200px;
+  overflow: hidden;
+
+  .resizer {
+    position: absolute;
+    right: -4px;
+    top: 0;
+    bottom: 0;
+    width: 8px;
+    cursor: ew-resize;
+    background: transparent;
+    transition: background 0.2s;
+
+    &:hover {
+      background: var(--hover-color);
+    }
+  }
 }
 
 .header {
-  padding: var(--spacing-unit) 0;
-  border-bottom: 1px solid var(--border-color);
-  margin-bottom: var(--spacing-unit);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  transition: all 0.3s ease;
 
   h1 {
-    font-size: 1.5rem;
+    font-size: 1.25rem;
     font-weight: 600;
+    margin: 0;
+    color: var(--text-color);
+  }
+
+  &[data-selection-mode="true"] {
+    background: var(--background-color-light);
+    margin: -1rem -1rem 1rem -1rem;
+    padding: 1rem;
+
+    h1 {
+      font-size: 1rem;
+      font-weight: 500;
+      opacity: 0.8;
+    }
   }
 }
 
-.newButton {
+.actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
   width: 100%;
-  padding: calc(var(--spacing-unit) * 0.75);
-  background: var(--text-color);
-  color: var(--primary-bg);
-  border: none;
-  border-radius: var(--border-radius);
-  cursor: pointer;
-  margin-bottom: var(--spacing-unit);
-  transition: var(--hover-transition);
-
-  &:hover {
-    opacity: 0.9;
-  }
+  margin-top: 0.25rem;
 }
 
 .docsList {
@@ -47,25 +75,60 @@
 
 .docLink {
   flex: 1;
-  color: var(--text-color);
   text-decoration: none;
+  color: var(--text-color);
+  font-size: 0.9375rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   margin-right: calc(var(--spacing-unit) * 0.5);
 }
 
 .docItem {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: calc(var(--spacing-unit) * 0.5);
-  font-size: 0.875rem;
-  border-radius: var(--border-radius);
+  gap: 0.75rem;
+  padding: 0.5rem;
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
+  position: relative;
+  cursor: pointer;
 
   &:hover {
-    background: var(--primary-bg);
+    background-color: var(--hover-color);
 
     .options {
       opacity: 1;
     }
+  }
+
+  &:focus {
+    outline: 2px solid #0070f3;
+    outline-offset: -2px;
+    background: rgba(0, 112, 243, 0.05);
+  }
+
+  &[data-selected="true"] {
+    background: rgba(0, 112, 243, 0.1);
+  }
+
+  .docLink:focus {
+    outline: none;
+  }
+
+  .itemContent {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+  }
+
+  .title {
+    flex: 1;
+  }
+
+  &:focus-within > .itemContent > :first-child {
+    outline: none;
   }
 }
 
@@ -76,4 +139,10 @@
 
 .deleteItem {
   color: #ff4444;
+}
+
+.selectionControls {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
 }

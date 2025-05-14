@@ -2,6 +2,7 @@
 
 import { ClientLayout } from '@/components/ClientLayout/ClientLayout';
 import { SelectionProvider } from '@/contexts/SelectionContext';
+import { ToastProvider } from '@/contexts/ToastContext';
 import './globals.scss';
 
 export default function RootLayout({
@@ -13,9 +14,11 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <SelectionProvider>
-          <ClientLayout>
-            {children}
-          </ClientLayout>
+          <ToastProvider>
+            <ClientLayout>
+              {children}
+            </ClientLayout>
+          </ToastProvider>
         </SelectionProvider>
       </body>
     </html>

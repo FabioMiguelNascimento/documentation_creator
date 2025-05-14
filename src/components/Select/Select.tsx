@@ -10,6 +10,7 @@ export interface SelectOption {
 }
 
 interface SelectProps {
+  label?: string;
   value: string;
   options: SelectOption[];
   onChange: (value: string) => void;
@@ -21,6 +22,7 @@ interface SelectProps {
 }
 
 export default function Select({ 
+  label,
   value, 
   options, 
   onChange, 
@@ -154,6 +156,7 @@ export default function Select({
         e.preventDefault();
       }}
     >
+      {label && <label htmlFor={selectId} className={styles.label}>{label}</label>}
       <button 
         id={selectId}
         className={`${styles.trigger} select-trigger`}

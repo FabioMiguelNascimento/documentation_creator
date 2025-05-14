@@ -1,28 +1,88 @@
 "use client";
 
+import Button from "@/components/Button/Button";
 import Dropdown, { DropdownItem } from "@/components/Dropdown/Dropdown";
+import Checkbox from "@/components/Select/Checkbox/Checkbox";
+import { useToast } from "@/contexts/ToastContext";
+import { useDocumentSelection } from "@/hooks/useDocumentSelection";
+import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
+import { documentStorage } from "@/services/documentStorage";
 import { Documentation } from "@/types/documentation";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
-  HiDotsVertical,
-  HiDownload,
-  HiDuplicate,
-  HiPencil,
-  HiTrash,
+    HiCheck,
+    HiDotsVertical,
+    HiDownload,
+    HiDuplicate,
+    HiOutlinePlus,
+    HiPencil,
+    HiTrash,
 } from "react-icons/hi";
+import ExportModal from "../ExportModal/ExportModal";
 import styles from "./Navigation.module.scss";
 
 export default function Navigation() {
   const [docs, setDocs] = useState<Documentation[]>([]);
+  const {
+    isSelectionMode,
+    selectedDocs,
+    toggleSelection,
+    toggleSelectionMode,
+    selectAll
+  } = useDocumentSelection();
   const router = useRouter();
+  const [showExportModal, setShowExportModal] = useState(false);
+  const { showToast } = useToast();
+  const [width, setWidth] = useState(() => {
+    const savedWidth = localStorage.getItem('navigationWidth');
+    return savedWidth ? parseInt(savedWidth) : 280;
+  });
+  const isResizing = useRef(false);
+  const navigationRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
-    const savedDocs = localStorage.getItem("docs");
-    if (savedDocs) {
-      setDocs(JSON.parse(savedDocs));
-    }
+    const handleUpdate = () => setDocs(documentStorage.get());
+    const handleSingleUpdate = (e: CustomEvent<{ doc: Documentation }>) => {
+      setDocs(docs => docs.map(d => 
+        d.id === e.detail.doc.id ? e.detail.doc : d
+      ));
+    };
+
+    handleUpdate();
+    document.addEventListener('docsUpdated', handleUpdate);
+    document.addEventListener('docUpdated', handleSingleUpdate as EventListener);
+    
+    return () => {
+      document.removeEventListener('docsUpdated', handleUpdate);
+      document.removeEventListener('docUpdated', handleSingleUpdate as EventListener);
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isResizing.current) return;
+      
+      const newWidth = Math.min(Math.max(e.clientX, 200), 600);
+      setWidth(newWidth);
+      localStorage.setItem('navigationWidth', newWidth.toString());
+    };
+
+    const handleMouseUp = () => {
+      isResizing.current = false;
+      document.body.style.cursor = 'default';
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
   }, []);
 
   const handleNewDoc = () => {
@@ -37,15 +97,15 @@ export default function Navigation() {
     };
 
     const updatedDocs = [...docs, newDoc];
-    localStorage.setItem("docs", JSON.stringify(updatedDocs));
-    setDocs(updatedDocs);
+    documentStorage.save(updatedDocs);
     router.push(`/docs/${newDoc.slug}`);
   };
 
   const handleDelete = (docId: string) => {
     const updatedDocs = docs.filter((d) => d.id !== docId);
-    localStorage.setItem("docs", JSON.stringify(updatedDocs));
+    documentStorage.save(updatedDocs);
     setDocs(updatedDocs);
+    showToast('Documento excluído com sucesso', 'success');
   };
 
   const handleDuplicate = (doc: Documentation) => {
@@ -59,49 +119,175 @@ export default function Navigation() {
     };
 
     const updatedDocs = [...docs, newDoc];
-    localStorage.setItem("docs", JSON.stringify(updatedDocs));
+    documentStorage.save(updatedDocs);
     setDocs(updatedDocs);
+    showToast('Documento duplicado com sucesso', 'success');
   };
 
-  return (
-    <nav className={styles.navigation}>
-      <div className={styles.header}>
-        <h1>DocBuilder</h1>
-      </div>
+  const handleSelectAll = () => {
+    selectAll(docs.map(doc => doc.id));
+  };
 
-      <button onClick={handleNewDoc} className={styles.newButton}>
-        + New doc
-      </button>
+  const handleExport = () => {
+    setShowExportModal(true);
+  };
+
+  const handleRename = (docId: string, newTitle: string) => {
+    const title = newTitle.trim() || 'New Doc';
+    const updatedDocs = docs.map(doc => 
+      doc.id === docId 
+        ? { 
+            ...doc, 
+            title,
+            updatedAt: new Date().toISOString() 
+          } 
+        : doc
+    );
+    
+    documentStorage.save(updatedDocs);
+    setDocs(updatedDocs);
+    showToast('Documento renomeado com sucesso', 'success');
+  };
+
+  const selectedDocuments = docs.filter(doc => selectedDocs.includes(doc.id));
+
+  const renderDocItem = (doc: Documentation) => (
+    <div 
+      key={`doc-${doc.id}`}
+      className={styles.docItem}
+      data-selected={selectedDocs.includes(doc.id)}
+      data-doc-id={doc.id}
+      tabIndex={isSelectionMode ? 0 : undefined}
+      role={isSelectionMode ? "button" : undefined}
+      aria-pressed={isSelectionMode ? selectedDocs.includes(doc.id) : undefined}
+      onClick={isSelectionMode ? () => toggleSelection(doc.id) : undefined}
+      onKeyDown={(e) => {
+        if (isSelectionMode && (e.key === ' ' || e.key === 'Enter')) {
+          e.preventDefault();
+          toggleSelection(doc.id);
+        }
+      }}
+    >
+      {isSelectionMode ? (
+        <div className={styles.itemContent}>
+          <Checkbox
+            checked={selectedDocs.includes(doc.id)}
+            onChange={() => toggleSelection(doc.id)}
+            tabIndex={-1}
+          />
+          <span className={styles.title}>{doc.title}</span>
+        </div>
+      ) : (
+        <Link
+          href={`/docs/${doc.slug}`}
+          className={styles.docLink}
+          onClick={e => isSelectionMode && e.preventDefault()}
+        >
+          {doc.title}
+        </Link>
+      )}
+      {!isSelectionMode && (
+        <div 
+          className={styles.options}
+          onClick={e => e.stopPropagation()}
+        >
+          <Dropdown trigger={<HiDotsVertical />} align="right">
+            <DropdownItem 
+              icon={<HiPencil />}
+              onClick={() => handleRename(doc.id, prompt('Novo nome:', doc.title) || doc.title)}
+            >
+              Rename
+            </DropdownItem>
+            <DropdownItem
+              icon={<HiDuplicate />}
+              onClick={() => handleDuplicate(doc)}
+            >
+              Clone
+            </DropdownItem>
+            <DropdownItem icon={<HiDownload />} onClick={toggleSelectionMode}>
+              Export
+            </DropdownItem>
+            <DropdownItem
+              icon={<HiTrash />}
+              onClick={() => handleDelete(doc.id)}
+              className={styles.deleteItem}
+            >
+              Delete
+            </DropdownItem>
+          </Dropdown>
+        </div>
+      )}
+    </div>
+  );
+
+  return (
+    <nav 
+      ref={navigationRef}
+      className={styles.navigation}
+      style={{ width }}
+    >
+      {isSelectionMode ? (
+        <div className={styles.header} data-selection-mode={true}>
+          <h1>Selecionar documentos</h1>
+          <div className={styles.actions}>
+            <Button
+              size="sm"
+              variant="primary"
+              icon={<HiCheck />}
+              onClick={handleSelectAll}
+              fullWidth
+            >
+              {selectedDocs.length === docs.length ? 'Deselect All' : 'Select All'}
+            </Button>
+            <Button 
+              size="sm"
+              variant="secondary"
+              onClick={toggleSelectionMode}
+              fullWidth
+            >
+              Cancel
+            </Button>
+          </div>
+          <Button 
+            variant="primary"
+            onClick={handleExport}
+            fullWidth
+            disabled={selectedDocs.length === 0}
+          >
+            Export {selectedDocs.length || 'no'} documents
+          </Button>
+        </div>
+      ) : (
+        <div className={styles.header}>
+          <h1>DocBuilder</h1>
+          <Button
+            icon={<HiOutlinePlus />}
+            onClick={handleNewDoc}
+            fullWidth
+          >
+            New doc
+          </Button>
+        </div>
+      )}
 
       <div className={styles.docsList}>
         <h2>Current Docs</h2>
-        {docs.map((doc) => (
-          <div key={doc.id} className={styles.docItem}>
-            <Link href={`/docs/${doc.slug}`} className={styles.docLink}>
-              {doc.title}
-            </Link>
-            <div className={styles.options}>
-              <Dropdown trigger={<HiDotsVertical />} align="right">
-                <DropdownItem icon={<HiPencil />}>Rename</DropdownItem>
-                <DropdownItem
-                  icon={<HiDuplicate />}
-                  onClick={() => handleDuplicate(doc)}
-                >
-                  Clone
-                </DropdownItem>
-                <DropdownItem icon={<HiDownload />}>Export</DropdownItem>
-                <DropdownItem
-                  icon={<HiTrash />}
-                  onClick={() => handleDelete(doc.id)}
-                  className={styles.deleteItem}
-                >
-                  Delete
-                </DropdownItem>
-              </Dropdown>
-            </div>
-          </div>
-        ))}
+        {docs.map(renderDocItem)}
       </div>
+
+      <div
+        className={styles.resizer}
+        onMouseDown={(e) => {
+          isResizing.current = true;
+          document.body.style.cursor = 'ew-resize';
+        }}
+      />
+
+      <ExportModal
+        isOpen={showExportModal}
+        onClose={() => setShowExportModal(false)}
+        selectedDocs={selectedDocuments}
+      />
     </nav>
   );
 }

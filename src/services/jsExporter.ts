@@ -1,4 +1,5 @@
 import { Block } from "@/types/documentation";
+import { fileNameUtils } from '@/utils/fileNameUtils';
 import React from 'react';
 
 const styles = `
@@ -74,11 +75,12 @@ export const jsExporter = {
 
   downloadJs: (blocks: Block[], filename = 'DocumentViewer') => {
     const jsContent = jsExporter.exportToJs(blocks);
+    const normalizedName = fileNameUtils.normalize(filename);
     const blob = new Blob([jsContent], { type: 'text/javascript' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${filename}.jsx`;
+    a.download = `${normalizedName}.jsx`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);

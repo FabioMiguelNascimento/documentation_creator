@@ -1,4 +1,5 @@
 import { Block } from "@/types/documentation";
+import { fileNameUtils } from '@/utils/fileNameUtils';
 
 export const markdownExporter = {
   convertBlock: (block: Block): string => {
@@ -24,11 +25,12 @@ export const markdownExporter = {
 
   downloadMarkdown: (blocks: Block[], filename = 'document') => {
     const markdown = markdownExporter.exportToMarkdown(blocks);
+    const normalizedName = fileNameUtils.normalize(filename);
     const blob = new Blob([markdown], { type: 'text/markdown' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${filename}.md`;
+    a.download = `${normalizedName}.md`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
