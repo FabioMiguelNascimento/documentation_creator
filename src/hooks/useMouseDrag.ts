@@ -17,7 +17,6 @@ export function useMouseDrag() {
       return;
     }
     
-    console.log('Start drag:', { x: e.clientX, y: e.clientY });
     setIsDragging(true);
     const position = { x: e.clientX, y: e.clientY };
     setStartPos(position);
@@ -26,7 +25,6 @@ export function useMouseDrag() {
 
   const updateDrag = useCallback((e: React.MouseEvent) => {
     if (!isDragging) return;
-    console.log('Update drag:', { x: e.clientX, y: e.clientY });
     setCurrentPos({ x: e.clientX, y: e.clientY });
   }, [isDragging]);
 

@@ -1,11 +1,7 @@
-"use client";
-
-import { useSelection } from '@/contexts/SelectionContext';
 import { Block } from '@/types/documentation';
 import { DragDropContext, Droppable, DropResult } from '@hello-pangea/dnd';
 import CodeBlock from '../blocks/CodeBlock/CodeBlock';
 import TextBlock from '../blocks/TextBlock/TextBlock';
-import { SelectionPane } from '../SelectionPane/SelectionPane';
 import styles from './DocumentEditor.module.scss';
 
 interface DocumentEditorProps {
@@ -14,8 +10,6 @@ interface DocumentEditorProps {
 }
 
 export default function DocumentEditor({ blocks, onChange }: DocumentEditorProps) {
-  const { startSelection, updateSelection, endSelection } = useSelection();
-
   const handleDragEnd = (result: DropResult) => {
     if (!result.destination) return
     const reorderedBlocks = Array.from(blocks)
@@ -25,15 +19,8 @@ export default function DocumentEditor({ blocks, onChange }: DocumentEditorProps
   }
 
   return (
-    <main 
-      className={styles.editor}
-      onMouseDown={(e) => startSelection(e.clientX, e.clientY)}
-      onMouseMove={(e) => updateSelection(e.clientX, e.clientY)}
-      onMouseUp={endSelection}
-      onMouseLeave={endSelection}
-    >
+    <main className={styles.editor}>
       <div className={styles.container}>
-        <SelectionPane />
         <DragDropContext onDragEnd={handleDragEnd}>
           <div className={styles.blocksWrapper}>
             <Droppable droppableId="blocks">

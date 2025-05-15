@@ -49,7 +49,7 @@ export class BlockService {
       type: data.type,
       content: data.content || '',
       order: Date.now(),
-      language: data.type === 'code' ? data.language || 'javascript' : undefined
+      language: data.type
     }
 
     const validation = this.validateBlock(block)
@@ -65,7 +65,7 @@ export class BlockService {
       ...block,
       type: newType,
       content: content || block.content,
-      language: newType === 'code' ? 'javascript' : undefined
+      language: newType
     }
 
     const validation = this.validateBlock(transformedBlock)

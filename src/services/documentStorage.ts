@@ -13,15 +13,16 @@ export const documentStorage = {
     return savedDocs ? JSON.parse(savedDocs) : [];
   },
 
-  update(doc: Documentation, notify = true) {
-    const docs = this.get();
-    const updatedDocs = docs.map(d => d.id === doc.id ? doc : d);
-    localStorage.setItem("docs", JSON.stringify(updatedDocs));
+  update(doc: Documentation) {
+    const docs = JSON.parse(localStorage.getItem('docs') || '[]');
+    const updatedDocs = docs.map((d: Documentation) => 
+      d.id === doc.id ? doc : d
+    );
     
-    if (notify) {
-      document.dispatchEvent(new CustomEvent('docUpdated', { 
-        detail: { doc } 
-      }));
-    }
+    localStorage.setItem('docs', JSON.stringify(updatedDocs));
+
+    // Disparar evento para atualizar outros componentes
+    const event = new CustomEvent('docUpdated', { detail: { doc } });
+    document.dispatchEvent(event);
   }
 };

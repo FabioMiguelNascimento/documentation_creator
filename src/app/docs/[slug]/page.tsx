@@ -2,7 +2,6 @@
 import { CodeBlock } from '@/components/blocks/CodeBlock/CodeBlock';
 import { TextBlock } from '@/components/blocks/TextBlock/TextBlock';
 import { BlockProvider, useBlocks } from '@/contexts/BlockContext';
-import { useSelection } from '@/contexts/SelectionContext';
 import { useMouseDrag } from '@/hooks/useMouseDrag';
 import { documentStorage } from '@/services/documentStorage';
 import { Block, Documentation } from '@/types/documentation';
@@ -14,7 +13,6 @@ import styles from './page.module.scss';
 function DocContent({ doc, setDoc }: { doc: Documentation; setDoc: (doc: Documentation) => void }) {
   const { setInitialBlocks } = useBlocks();
   const { startDrag, updateDrag, endDrag } = useMouseDrag();
-  const { startSelection, updateSelection, endSelection } = useSelection();
 
   useEffect(() => {
     if (doc) {
@@ -159,7 +157,7 @@ function DocContent({ doc, setDoc }: { doc: Documentation; setDoc: (doc: Documen
     updateDocument(updatedDoc);
   };
 
-  const handleCreateBlock = (type: 'text' | 'code' = 'text') => {
+  const handleCreateBlock = (type: 'text' | 'code' = 'text', language?: string) => {
     if (!doc) return;
 
     const newBlock = {
@@ -167,6 +165,7 @@ function DocContent({ doc, setDoc }: { doc: Documentation; setDoc: (doc: Documen
       type,
       content: '',
       order: doc.blocks.length,
+      language: type === 'code' ? (language || 'javascript') : undefined
     };
 
     const updatedDoc = {
@@ -187,11 +186,17 @@ function DocContent({ doc, setDoc }: { doc: Documentation; setDoc: (doc: Documen
 
     const currentBlock = blocks[blockIndex];
     const previousOrder = currentBlock?.order || 0;
+    
+    const inheritedLanguage = currentBlock.type === 'code' && type === 'code' 
+      ? currentBlock.language 
+      : 'javascript';
+
     const newBlock = {
       id: `block-${Date.now()}`,
       type,
       content: '',
       order: previousOrder + 1,
+      language: type === 'code' ? inheritedLanguage : undefined
     };
 
     const updatedBlocks = [
@@ -219,11 +224,15 @@ function DocContent({ doc, setDoc }: { doc: Documentation; setDoc: (doc: Documen
     return newBlock.id;
   };
 
-  const handleBlockChange = (blockId: string, content: string) => {
+  const handleBlockChange = (blockId: string, content: string, language?: string) => {
     if (!doc) return;
 
     const updatedBlocks = doc.blocks.map(block =>
-      block.id === blockId ? { ...block, content } : block
+      block.id === blockId ? { 
+        ...block, 
+        content,
+        language: language || block.language
+      } : block
     );
 
     const updatedDoc = {
@@ -269,7 +278,11 @@ function DocContent({ doc, setDoc }: { doc: Documentation; setDoc: (doc: Documen
 
     const updatedDoc = {
       ...doc,
-      blocks: items.map((block, index) => ({ ...block, order: index })),
+      blocks: items.map((block, index) => ({
+        ...block,
+        order: index,
+        language: block.language
+      })),
       updatedAt: new Date().toISOString()
     };
 
@@ -290,10 +303,11 @@ function DocContent({ doc, setDoc }: { doc: Documentation; setDoc: (doc: Documen
             ...block, 
             type: newType, 
             content,
-            language: language || block.language 
+            language: language || 'javascript'
           } 
         : block
     );
+
 
     const updatedDoc = {
       ...doc,
@@ -316,12 +330,13 @@ function DocContent({ doc, setDoc }: { doc: Documentation; setDoc: (doc: Documen
   };
 
   const renderBlock = (block: Block, index: number) => {
-    const { id, type, content } = block;
+    const { id, type, content, language } = block;
 
     const commonProps = {
       id,
       content,
       index,
+      language: type === 'code' ? (language || 'javascript') : undefined,
       onChange: handleBlockChange,
       onDelete: handleDeleteBlock,
       onTransform: handleTransformBlock,

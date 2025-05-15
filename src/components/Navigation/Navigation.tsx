@@ -4,11 +4,9 @@ import Button from "@/components/Button/Button";
 import Dropdown, { DropdownItem } from "@/components/Dropdown/Dropdown";
 import Checkbox from "@/components/Select/Checkbox/Checkbox";
 import { useToast } from "@/contexts/ToastContext";
-import { useDocumentSelection } from "@/hooks/useDocumentSelection";
 import { documentStorage } from "@/services/documentStorage";
 import { Documentation } from "@/types/documentation";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import {
   HiCheck,
@@ -25,14 +23,7 @@ import styles from "./Navigation.module.scss";
 export default function Navigation() {
   const [docs, setDocs] = useState<Documentation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const {
-    isSelectionMode,
-    selectedDocs,
-    toggleSelection,
-    toggleSelectionMode,
-    selectAll
-  } = useDocumentSelection();
-  const router = useRouter();
+  const [selectedDocs, setSelectedDocs] = useState<string[]>([]);
   const [showExportModal, setShowExportModal] = useState(false);
   const { showToast } = useToast();
   const navigationRef = useRef<HTMLElement>(null);
@@ -43,18 +34,24 @@ export default function Navigation() {
       setIsLoading(false);
     };
     const handleSingleUpdate = (e: CustomEvent<{ doc: Documentation }>) => {
-      setDocs(docs => docs.map(d => 
-        d.id === e.detail.doc.id ? e.detail.doc : d
-      ));
+      setDocs((docs) =>
+        docs.map((d) => (d.id === e.detail.doc.id ? e.detail.doc : d))
+      );
     };
 
     handleUpdate();
-    document.addEventListener('docsUpdated', handleUpdate);
-    document.addEventListener('docUpdated', handleSingleUpdate as EventListener);
-    
+    document.addEventListener("docsUpdated", handleUpdate);
+    document.addEventListener(
+      "docUpdated",
+      handleSingleUpdate as EventListener
+    );
+
     return () => {
-      document.removeEventListener('docsUpdated', handleUpdate);
-      document.removeEventListener('docUpdated', handleSingleUpdate as EventListener);
+      document.removeEventListener("docsUpdated", handleUpdate);
+      document.removeEventListener(
+        "docUpdated",
+        handleSingleUpdate as EventListener
+      );
     };
   }, []);
 
@@ -78,7 +75,7 @@ export default function Navigation() {
     const updatedDocs = docs.filter((d) => d.id !== docId);
     documentStorage.save(updatedDocs);
     setDocs(updatedDocs);
-    showToast('Documento excluído com sucesso', 'success');
+    showToast("Documento excluído com sucesso", "success");
   };
 
   const handleDuplicate = (doc: Documentation) => {
@@ -94,11 +91,15 @@ export default function Navigation() {
     const updatedDocs = [...docs, newDoc];
     documentStorage.save(updatedDocs);
     setDocs(updatedDocs);
-    showToast('Documento duplicado com sucesso', 'success');
+    showToast("Documento duplicado com sucesso", "success");
   };
 
   const handleSelectAll = () => {
-    selectAll(docs.map(doc => doc.id));
+    if (selectedDocs.length === docs.length) {
+      setSelectedDocs([]);
+    } else {
+      setSelectedDocs(docs.map((doc) => doc.id));
+    }
   };
 
   const handleExport = () => {
@@ -106,42 +107,42 @@ export default function Navigation() {
   };
 
   const handleRename = (docId: string, newTitle: string) => {
-    const title = newTitle.trim() || 'New Doc';
-    const updatedDocs = docs.map(doc => 
-      doc.id === docId 
-        ? { 
-            ...doc, 
+    const title = newTitle.trim() || "New Doc";
+    const updatedDocs = docs.map((doc) =>
+      doc.id === docId
+        ? {
+            ...doc,
             title,
-            updatedAt: new Date().toISOString() 
-          } 
+            updatedAt: new Date().toISOString(),
+          }
         : doc
     );
-    
+
     documentStorage.save(updatedDocs);
     setDocs(updatedDocs);
-    showToast('Documento renomeado com sucesso', 'success');
+    showToast("Documento renomeado com sucesso", "success");
   };
 
-  const selectedDocuments = docs.filter(doc => selectedDocs.includes(doc.id));
+  const selectedDocuments = docs.filter((doc) => selectedDocs.includes(doc.id));
 
   const renderDocItem = (doc: Documentation) => (
-    <div 
+    <div
       key={`doc-${doc.id}`}
       className={styles.docItem}
       data-selected={selectedDocs.includes(doc.id)}
       data-doc-id={doc.id}
-      tabIndex={isSelectionMode ? 0 : undefined}
-      role={isSelectionMode ? "button" : undefined}
-      aria-pressed={isSelectionMode ? selectedDocs.includes(doc.id) : undefined}
-      onClick={isSelectionMode ? () => toggleSelection(doc.id) : undefined}
+      tabIndex={selectedDocs.length > 0 ? 0 : undefined}
+      role={selectedDocs.length > 0 ? "button" : undefined}
+      aria-pressed={selectedDocs.length > 0 ? selectedDocs.includes(doc.id) : undefined}
+      onClick={selectedDocs.length > 0 ? () => toggleSelection(doc.id) : undefined}
       onKeyDown={(e) => {
-        if (isSelectionMode && (e.key === ' ' || e.key === 'Enter')) {
+        if (selectedDocs.length > 0 && (e.key === " " || e.key === "Enter")) {
           e.preventDefault();
           toggleSelection(doc.id);
         }
       }}
     >
-      {isSelectionMode ? (
+      {selectedDocs.length > 0 ? (
         <div className={styles.itemContent}>
           <Checkbox
             checked={selectedDocs.includes(doc.id)}
@@ -154,20 +155,22 @@ export default function Navigation() {
         <Link
           href={`/docs/${doc.slug}`}
           className={styles.docLink}
-          onClick={e => isSelectionMode && e.preventDefault()}
+          onClick={(e) => selectedDocs.length > 0 && e.preventDefault()}
         >
           {doc.title}
         </Link>
       )}
-      {!isSelectionMode && (
-        <div 
-          className={styles.options}
-          onClick={e => e.stopPropagation()}
-        >
+      {selectedDocs.length === 0 && (
+        <div className={styles.options} onClick={(e) => e.stopPropagation()}>
           <Dropdown trigger={<HiDotsVertical />} align="right">
-            <DropdownItem 
+            <DropdownItem
               icon={<HiPencil />}
-              onClick={() => handleRename(doc.id, prompt('Novo nome:', doc.title) || doc.title)}
+              onClick={() =>
+                handleRename(
+                  doc.id,
+                  prompt("Novo nome:", doc.title) || doc.title
+                )
+              }
             >
               Rename
             </DropdownItem>
@@ -177,7 +180,7 @@ export default function Navigation() {
             >
               Clone
             </DropdownItem>
-            <DropdownItem icon={<HiDownload />} onClick={toggleSelectionMode}>
+            <DropdownItem icon={<HiDownload />} onClick={handleExport}>
               Export
             </DropdownItem>
             <DropdownItem
@@ -194,11 +197,8 @@ export default function Navigation() {
   );
 
   return (
-    <nav 
-      ref={navigationRef}
-      className={styles.navigation}
-    >
-      {isSelectionMode ? (
+    <nav ref={navigationRef} className={styles.navigation}>
+      {selectedDocs.length > 0 ? (
         <div className={styles.header} data-selection-mode={true}>
           <h1>Selecionar documentos</h1>
           <div className={styles.actions}>
@@ -209,34 +209,30 @@ export default function Navigation() {
               onClick={handleSelectAll}
               fullWidth
             >
-              {selectedDocs.length === docs.length ? 'Deselect All' : 'Select All'}
+              {selectedDocs.length === docs.length ? "Deselect All" : "Select All"}
             </Button>
-            <Button 
+            <Button
               size="sm"
               variant="secondary"
-              onClick={toggleSelectionMode}
+              onClick={() => setSelectedDocs([])}
               fullWidth
             >
               Cancel
             </Button>
           </div>
-          <Button 
+          <Button
             variant="primary"
             onClick={handleExport}
             fullWidth
             disabled={selectedDocs.length === 0}
           >
-            Export {selectedDocs.length || 'no'} documents
+            Export {selectedDocs.length || "no"} documents
           </Button>
         </div>
       ) : (
         <div className={styles.header}>
           <h1>DocBuilder</h1>
-          <Button
-            icon={<HiOutlinePlus />}
-            onClick={handleNewDoc}
-            fullWidth
-          >
+          <Button icon={<HiOutlinePlus />} onClick={handleNewDoc} fullWidth>
             New doc
           </Button>
         </div>

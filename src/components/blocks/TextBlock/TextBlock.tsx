@@ -1,6 +1,4 @@
 import FloatingToolbar from '@/components/FloatingToolbar/FloatingToolbar';
-import { useSelection } from '@/contexts/SelectionContext';
-import { withSelectable } from '@/hocs/withSelectable';
 import { useTextBlock } from '@/hooks/useTextBlock';
 import { Draggable } from "@hello-pangea/dnd";
 import { Extension } from '@tiptap/core';
@@ -71,9 +69,8 @@ interface TextBlockProps {
   onEnter: (id: string) => void;
 }
 
-const TextBlockComponent = ({ id, index, ...props }: TextBlockProps) => {
+const TextBlock = ({ id, index, ...props }: TextBlockProps) => {
   const { handleUpdate } = useTextBlock(id);
-  const { state } = useSelection();
   const [toolbarPosition, setToolbarPosition] = useState({ x: 0, y: 0, show: false });
   const [isTransforming, setIsTransforming] = useState(false);
   const blockRef = useRef<HTMLDivElement>(null);
@@ -141,7 +138,7 @@ const TextBlockComponent = ({ id, index, ...props }: TextBlockProps) => {
           const codeBlockMatch = currentLine.match(/^```(\w*)$/);
           if (codeBlockMatch) {
             const [, language] = codeBlockMatch;
-            props.onTransform(id, 'code', '', language || 'javascript');
+            props.onTransform(id, 'code', '', language);
             return true;
           }
 
@@ -162,7 +159,7 @@ const TextBlockComponent = ({ id, index, ...props }: TextBlockProps) => {
       if (codeBlockMatch) {
         const [, language] = codeBlockMatch;
         setIsTransforming(true);
-        props.onTransform(id, 'code', '', language || 'javascript');
+        props.onTransform(id, 'code', '', language);
         setTimeout(() => {
           setIsTransforming(false);
         }, 0);
@@ -196,12 +193,12 @@ const TextBlockComponent = ({ id, index, ...props }: TextBlockProps) => {
     );
     
     if (selectedText) {
-      props.onTransform(id, 'code', selectedText, 'javascript');
+      props.onTransform(id, 'code', selectedText);
     }
   };
 
   return (
-    <Draggable draggableId={String(id)} index={index} isDragDisabled={state.isSelecting}>
+    <Draggable draggableId={String(id)} index={index}>
       {(provided) => (
         <div
           id={id}
@@ -210,7 +207,7 @@ const TextBlockComponent = ({ id, index, ...props }: TextBlockProps) => {
             provided.innerRef(node);
           }}
           {...provided.draggableProps}
-          className={`${styles.textBlock} inlineFormatting`}
+          className={styles.textBlock}
         >
           <div className={styles.blockControls}>
             <div {...provided.dragHandleProps} className={styles.dragHandle}>
@@ -236,4 +233,5 @@ const TextBlockComponent = ({ id, index, ...props }: TextBlockProps) => {
   );
 };
 
-export const TextBlock = withSelectable(TextBlockComponent);
+export { TextBlock };
+
