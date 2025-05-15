@@ -80,6 +80,27 @@ body {
   }
 }
 
+[data-panel-group-direction="horizontal"] > [data-panel-resize-handle] {
+  width: 4px;
+  margin: 0 -2px;
+  background: transparent;
+  transition: background 0.2s;
+  position: relative;
+  z-index: 100;
+  cursor: ew-resize;
+
+  &:hover {
+    background: var(--primary-color);
+    opacity: 0.5;
+  }
+
+  &:active,
+  &[data-resize-handle-active="true"] {
+    background: var(--primary-color);
+    opacity: 0.8;
+  }
+}
+
 @media (max-width: 768px) {
   :root {
     --spacing-unit: 0.75rem;

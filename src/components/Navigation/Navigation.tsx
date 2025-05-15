@@ -5,26 +5,26 @@ import Dropdown, { DropdownItem } from "@/components/Dropdown/Dropdown";
 import Checkbox from "@/components/Select/Checkbox/Checkbox";
 import { useToast } from "@/contexts/ToastContext";
 import { useDocumentSelection } from "@/hooks/useDocumentSelection";
-import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { documentStorage } from "@/services/documentStorage";
 import { Documentation } from "@/types/documentation";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import {
-    HiCheck,
-    HiDotsVertical,
-    HiDownload,
-    HiDuplicate,
-    HiOutlinePlus,
-    HiPencil,
-    HiTrash,
+  HiCheck,
+  HiDotsVertical,
+  HiDownload,
+  HiDuplicate,
+  HiOutlinePlus,
+  HiPencil,
+  HiTrash,
 } from "react-icons/hi";
 import ExportModal from "../ExportModal/ExportModal";
 import styles from "./Navigation.module.scss";
 
 export default function Navigation() {
   const [docs, setDocs] = useState<Documentation[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const {
     isSelectionMode,
     selectedDocs,
@@ -35,15 +35,13 @@ export default function Navigation() {
   const router = useRouter();
   const [showExportModal, setShowExportModal] = useState(false);
   const { showToast } = useToast();
-  const [width, setWidth] = useState(() => {
-    const savedWidth = localStorage.getItem('navigationWidth');
-    return savedWidth ? parseInt(savedWidth) : 280;
-  });
-  const isResizing = useRef(false);
   const navigationRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
-    const handleUpdate = () => setDocs(documentStorage.get());
+    const handleUpdate = () => {
+      setDocs(documentStorage.get());
+      setIsLoading(false);
+    };
     const handleSingleUpdate = (e: CustomEvent<{ doc: Documentation }>) => {
       setDocs(docs => docs.map(d => 
         d.id === e.detail.doc.id ? e.detail.doc : d
@@ -57,31 +55,6 @@ export default function Navigation() {
     return () => {
       document.removeEventListener('docsUpdated', handleUpdate);
       document.removeEventListener('docUpdated', handleSingleUpdate as EventListener);
-    };
-  }, []);
-
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!isResizing.current) return;
-      
-      const newWidth = Math.min(Math.max(e.clientX, 200), 600);
-      setWidth(newWidth);
-      localStorage.setItem('navigationWidth', newWidth.toString());
-    };
-
-    const handleMouseUp = () => {
-      isResizing.current = false;
-      document.body.style.cursor = 'default';
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
-    };
-
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseup', handleMouseUp);
-
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
     };
   }, []);
 
@@ -224,7 +197,6 @@ export default function Navigation() {
     <nav 
       ref={navigationRef}
       className={styles.navigation}
-      style={{ width }}
     >
       {isSelectionMode ? (
         <div className={styles.header} data-selection-mode={true}>
@@ -272,16 +244,16 @@ export default function Navigation() {
 
       <div className={styles.docsList}>
         <h2>Current Docs</h2>
-        {docs.map(renderDocItem)}
+        {isLoading ? (
+          <>
+            <div className={styles.docItemSkeleton} />
+            <div className={styles.docItemSkeleton} />
+            <div className={styles.docItemSkeleton} />
+          </>
+        ) : (
+          docs.map(renderDocItem)
+        )}
       </div>
-
-      <div
-        className={styles.resizer}
-        onMouseDown={(e) => {
-          isResizing.current = true;
-          document.body.style.cursor = 'ew-resize';
-        }}
-      />
 
       <ExportModal
         isOpen={showExportModal}

@@ -1,32 +1,9 @@
 .navigation {
-  width: var(--sidebar-width);
   height: 100vh;
   background: var(--secondary-bg);
   border-right: 1px solid var(--border-color);
   padding: var(--spacing-unit);
-  position: sticky;
-  top: 0;
-  left: 0;
-  position: relative;
-  resize: horizontal;
-  max-width: 600px;
-  min-width: 200px;
-  overflow: hidden;
-
-  .resizer {
-    position: absolute;
-    right: -4px;
-    top: 0;
-    bottom: 0;
-    width: 8px;
-    cursor: ew-resize;
-    background: transparent;
-    transition: background 0.2s;
-
-    &:hover {
-      background: var(--hover-color);
-    }
-  }
+  overflow-y: auto;
 }
 
 .header {
@@ -145,4 +122,24 @@
   display: flex;
   gap: 0.5rem;
   align-items: center;
+}
+
+.docItemSkeleton {
+  height: 40px;
+  background: var(--tertiary-bg);
+  border-radius: 6px;
+  margin-bottom: 0.5rem;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 0.4;
+  }
+  100% {
+    opacity: 0.6;
+  }
 }
