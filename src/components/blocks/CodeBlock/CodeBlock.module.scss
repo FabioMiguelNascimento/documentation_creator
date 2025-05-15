@@ -61,7 +61,8 @@
 
 .selectWrapper {
   width: 100%;
-  
+  flex: 1;
+
   :global(.select-trigger) {
     background: var(--tertiary-bg);
     color: var(--text-color);
@@ -89,5 +90,62 @@
 
   &::selection {
     background: rgba(255, 255, 255, 0.1);
+  }
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  
+  & > :first-child {
+    flex: 0 1 180px;
+  }
+
+  & > :last-child {
+    flex: 0 0 auto;
+  }
+}
+
+.copyButton {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  padding: 0.5rem;
+  cursor: pointer;
+  border-radius: var(--border-radius);
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+
+  .codeBlock:hover & {
+    opacity: 1;
+  }
+
+  &:hover {
+    background: var(--secondary-bg);
+    color: var(--text-color);
+  }
+
+  svg {
+    width: 1.25rem;
+    height: 1.25rem;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+  }
+
+  &[data-copied="true"] {
+    color: var(--primary-color);
+    
+    svg {
+      transform: scale(1.1);
+    }
+  }
+
+  &:active svg {
+    transform: scale(0.9);
   }
 }

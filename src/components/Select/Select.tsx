@@ -19,6 +19,7 @@ interface SelectProps {
   emptyMessage?: string;
   className?: string;
   onClickTrigger?: (e: React.MouseEvent) => void;
+  size?: 'default' | 'compact';
 }
 
 export default function Select({ 
@@ -30,7 +31,8 @@ export default function Select({
   loading,
   className,
   emptyMessage = 'No options available',
-  onClickTrigger 
+  onClickTrigger,
+  size = 'default',
 }: SelectProps) {
   const selectId = useId();
   const listboxId = useId();
@@ -146,6 +148,7 @@ export default function Select({
     <div 
       ref={selectRef}
       className={`${styles.select} ${className || ''}`}
+      data-size={size}
       role="combobox"
       aria-expanded={isOpen}
       aria-haspopup="listbox"

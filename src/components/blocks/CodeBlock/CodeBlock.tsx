@@ -9,6 +9,7 @@ import 'prismjs/components/prism-jsx';
 import 'prismjs/components/prism-tsx';
 import 'prismjs/components/prism-typescript';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { MdCopyAll, MdDone } from "react-icons/md";
 import { SiCss3, SiHtml5, SiJavascript, SiMysql, SiReact, SiSass, SiTypescript } from 'react-icons/si';
 import styles from './CodeBlock.module.scss';
 
@@ -39,6 +40,7 @@ const CodeBlockComponent = ({ id, index, ...props }: CodeBlockProps) => {
   const { state } = useSelection();
   const preRef = useRef<HTMLPreElement>(null);
   const [currentLanguage, setCurrentLanguage] = useState(props.language || 'javascript');
+  const [copied, setCopied] = useState(false);
 
   const updateCodeHighlight = useCallback(() => {
     if (!preRef.current) return;
@@ -107,6 +109,16 @@ const CodeBlockComponent = ({ id, index, ...props }: CodeBlockProps) => {
     props.onChange(id, props.content, newLang);
   };
 
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(props.content);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLPreElement>) => {
     const isEmpty = !e.currentTarget.textContent?.trim();
 
@@ -148,13 +160,22 @@ const CodeBlockComponent = ({ id, index, ...props }: CodeBlockProps) => {
             ⋮
           </div>
           <div className={styles.codeWrapper}>
-            <div className={styles.selectWrapper}>
+            <div className={styles.header}>
               <Select
                 value={currentLanguage}
                 onChange={handleLanguageChange}
                 options={languageOptions}
                 placeholder="Select language..."
+                size="default"
               />
+              <button 
+                onClick={handleCopy} 
+                className={styles.copyButton}
+                title={copied ? "Copied!" : "Copy code"}
+                data-copied={copied}
+              >
+                {copied ? <MdDone /> : <MdCopyAll />}
+              </button>
             </div>
             <pre 
               ref={preRef}
