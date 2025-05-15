@@ -1,16 +1,14 @@
-import Select, { SelectOption } from '@/components/Select/Select';
+import Select from '@/components/Select/Select';
+import { languages } from '@/config/languages';
 import { useSelection } from '@/contexts/SelectionContext';
 import { withSelectable } from '@/hocs/withSelectable';
 import { useCodeBlock } from '@/hooks/useCodeBlock';
 import '@/styles/prism-theme.scss';
 import { Draggable } from '@hello-pangea/dnd';
 import Prism from 'prismjs';
-import 'prismjs/components/prism-jsx';
-import 'prismjs/components/prism-tsx';
-import 'prismjs/components/prism-typescript';
+
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { MdCopyAll, MdDone } from "react-icons/md";
-import { SiCss3, SiHtml5, SiJavascript, SiMysql, SiReact, SiSass, SiTypescript } from 'react-icons/si';
 import styles from './CodeBlock.module.scss';
 
 interface CodeBlockProps {
@@ -22,18 +20,6 @@ interface CodeBlockProps {
   onChange: (id: string, content: string, language: string) => void;
   onEnter: (id: string) => string;
 }
-
-const languageOptions: SelectOption[] = [
-  { value: 'javascript', label: 'JavaScript', icon: <SiJavascript /> },
-  { value: 'typescript', label: 'TypeScript', icon: <SiTypescript /> },
-  { value: 'jsx', label: 'JSX', icon: <SiReact /> },
-  { value: 'tsx', label: 'TSX', icon: <SiReact /> },
-  { value: 'html', label: 'HTML', icon: <SiHtml5 /> },
-  { value: 'css', label: 'CSS', icon: <SiCss3 /> },
-  { value: 'scss', label: 'SCSS', icon: <SiSass /> },
-  { value: 'sql', label: 'SQL', icon: <SiMysql /> },
-  { value: 'mysql', label: 'MySQL', icon: <SiMysql /> }
-];
 
 const CodeBlockComponent = ({ id, index, ...props }: CodeBlockProps) => {
   const { handleUpdate } = useCodeBlock(id);
@@ -69,10 +55,13 @@ const CodeBlockComponent = ({ id, index, ...props }: CodeBlockProps) => {
     const absolutePosition = currentPos + startOffset;
     
     const content = preElement.textContent || '';
+    const language = currentLanguage === 'shell' ? 'bash' : currentLanguage;
+    const grammar = Prism.languages[language] || Prism.languages.javascript;
+    
     const highlightedCode = Prism.highlight(
       content,
-      Prism.languages[currentLanguage] || Prism.languages.javascript,
-      currentLanguage
+      grammar,
+      language
     );
     preElement.innerHTML = `<code>${highlightedCode}</code>`;
 
@@ -164,7 +153,7 @@ const CodeBlockComponent = ({ id, index, ...props }: CodeBlockProps) => {
               <Select
                 value={currentLanguage}
                 onChange={handleLanguageChange}
-                options={languageOptions}
+                options={languages}
                 placeholder="Select language..."
                 size="default"
               />
